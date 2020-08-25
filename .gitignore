@@ -1,0 +1,9 @@
+﻿################################################################################
+# Este arquivo .gitignore foi criado automaticamente pelo Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/Rochas.DapperRepository/bin/Debug/netstandard2.0
+/Rochas.DapperRepository/obj
+/Rochas.DapperRepository.Test/bin/Debug/netcoreapp3.1
+/Rochas.DapperRepository.Test/obj

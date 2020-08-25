@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30225.117
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rochas.DapperRepository", "Rochas.DapperRepository\Rochas.DapperRepository.csproj", "{53735DBB-434A-4117-AD89-F980899AFF5F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rochas.DapperRepository.Test", "Rochas.DapperRepository.Test\Rochas.DapperRepository.Test.csproj", "{ABDECF47-D0CB-46BD-AF8E-4EBC7F5E20DC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{53735DBB-434A-4117-AD89-F980899AFF5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53735DBB-434A-4117-AD89-F980899AFF5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53735DBB-434A-4117-AD89-F980899AFF5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53735DBB-434A-4117-AD89-F980899AFF5F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ABDECF47-D0CB-46BD-AF8E-4EBC7F5E20DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABDECF47-D0CB-46BD-AF8E-4EBC7F5E20DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ABDECF47-D0CB-46BD-AF8E-4EBC7F5E20DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ABDECF47-D0CB-46BD-AF8E-4EBC7F5E20DC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1D1E239B-8478-4A12-B323-C5DCA5B3E1FE}
+	EndGlobalSection
+EndGlobal
