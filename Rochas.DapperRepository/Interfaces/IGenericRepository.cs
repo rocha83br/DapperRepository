@@ -7,6 +7,8 @@ namespace Rochas.DapperRepository.Interfaces
     {
         int Create(T entity);
         Task<int> CreateAsync(T entity);
+        void CreateRange(IEnumerable<T> entities);
+        Task CreateRangeAsync(IEnumerable<T> entities);
         int Delete(T filterEntity);
         Task<int> DeleteAsync(T filterEntity);
         int Edit(T entity, T filterEntity);

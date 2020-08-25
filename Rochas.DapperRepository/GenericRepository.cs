@@ -62,6 +62,48 @@ namespace Rochas.DapperRepository
             return await CreateAsync(entity, false);
         }
 
+        public void CreateRange(IEnumerable<T> entities)
+        {
+            using (var repos = new GenericRepository<T>(DatabaseEngine.SQLServer, _connString))
+            {
+                try
+                {
+                    repos.StartTransaction();
+
+                    foreach (var entity in entities)
+                        repos.Create(entity, false);
+
+                    repos.CommitTransaction();
+                }
+                catch (Exception ex)
+                {
+                    repos.CancelTransaction();
+                    throw ex;
+                }
+            }
+        }
+
+        public async Task CreateRangeAsync(IEnumerable<T> entities)
+        {
+            using (var repos = new GenericRepository<T>(DatabaseEngine.SQLServer, _connString))
+            {
+                try
+                {
+                    repos.StartTransaction();
+
+                    foreach (var entity in entities)
+                        await repos.CreateAsync(entity, false);
+
+                    repos.CommitTransaction();
+                }
+                catch (Exception ex)
+                {
+                    repos.CancelTransaction();
+                    throw ex;
+                }
+            }
+        }
+
         public int Edit(T entity, T filterEntity)
         {
             return Edit(entity, filterEntity, false);
@@ -214,11 +256,6 @@ namespace Rochas.DapperRepository
                 CreateReplicas(entity, entityProps, lastInsertedId, persistComposition);
 
             return lastInsertedId;
-        }
-
-        private int BulkCreate(IEnumerable<object> entities)
-        {
-            throw new NotImplementedException();
         }
 
         private int Edit(object entity, object filterEntity, bool persistComposition, string optionalConnConfig = "", bool isReplicating = false)
@@ -552,6 +589,19 @@ namespace Rochas.DapperRepository
 
             if (result.Any(rst => rst.Contains(SQLStatements.SQL_ReservedWord_INSERT)))
                 result.Reverse();
+
+            return result;
+        }
+
+        private DataSet GetEntityDataSet(object entity)
+        {
+            var entityProps = entity.GetType().GetProperties();
+            var entityInfo = EntitySqlParser.GetPropertiesValueList(entity, entityProps, PersistenceAction.Create);
+            var entityColumns = entityInfo.Select(ifo => ifo.Value).ToList();
+
+            var result = new DataSet(entityInfo["TableName"] as string);
+            foreach (var column in entityColumns.Where(c => c is IDictionary))
+                result.Tables[0].Columns.Add(((KeyValuePair<object, object>)column).Key.ToString());
 
             return result;
         }

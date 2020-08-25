@@ -7,7 +7,6 @@ using Dapper;
 using MySqlConnector;
 using Rochas.DapperRepository.Helpers.SQL;
 using Rochas.DapperRepository.Exceptions;
-using Rochas.DapperRepository.Interfaces;
 using Rochas.DapperRepository.Enums;
 
 namespace Rochas.DapperRepository.Base
@@ -16,6 +15,7 @@ namespace Rochas.DapperRepository.Base
     {
         #region Declarations
 
+        private DatabaseEngine engine;
         protected bool keepConnection = false;
         protected IDbConnection connection;
         protected IDbTransaction transactionControl;
@@ -24,8 +24,10 @@ namespace Rochas.DapperRepository.Base
         
         #region Constructors
 
-        public DataBaseConnection(DatabaseEngine engine, string connectionString, string logPath = null, bool keepConnected = false, params string[] replicaConnStrings) : base(connectionString, logPath, replicaConnStrings)
+        public DataBaseConnection(DatabaseEngine databaseEngine, string connectionString, string logPath = null, bool keepConnected = false, params string[] replicaConnStrings) : base(connectionString, logPath, replicaConnStrings)
         {
+            engine = databaseEngine;
+
             keepConnection = keepConnected;
             if (keepConnection) Connect();
         }
@@ -74,7 +76,10 @@ namespace Rochas.DapperRepository.Base
         {
             if (!string.IsNullOrEmpty(_connString) || !string.IsNullOrEmpty(optionalConnConfig))
             {
-                connection = new MySqlConnection();
+                if (engine == DatabaseEngine.SQLServer)
+                    connection = new SqlConnection();
+                else
+                    connection = new MySqlConnection();
 
                 if ((connection.State != ConnectionState.Open) && (connection.State != ConnectionState.Connecting))
                 {
