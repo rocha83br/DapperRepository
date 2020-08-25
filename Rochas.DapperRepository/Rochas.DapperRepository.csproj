@@ -12,6 +12,7 @@
     <RepositoryUrl>https://github.com/rocha83br/DapperRepository</RepositoryUrl>
     <PackageTags>dapper light lightweight generic repository entity entities database persistence CRUD POCO</PackageTags>
     <Version>1.0.1</Version>
+    <Description>A lightweight generic entities repository using Dapper</Description>
   </PropertyGroup>
 
   <ItemGroup>
