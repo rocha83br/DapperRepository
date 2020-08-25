@@ -36,14 +36,30 @@ namespace Rochas.DapperRepository
             return List(filter, loadComposition)?.FirstOrDefault() as T;
         }
 
+        public async Task<T> GetAsync(T filter, bool loadComposition = false)
+        {
+            var result = await ListAsync(filter, loadComposition);
+
+            return result?.FirstOrDefault() as T;
+        }
+
         public IEnumerable<T> List(T filter, bool loadComposition, int recordsLimit = 0, string orderAttributes = null, bool orderDescending = false)
         {
             return List(filter as object, loadComposition, recordsLimit, orderAttributes: orderAttributes, orderDescending: orderDescending) as IEnumerable<T>;
         }
-
+        public async Task<IEnumerable<T>> ListAsync(T filter, bool loadComposition, int recordsLimit = 0, string orderAttributes = null, bool orderDescending = false)
+        {
+            return await ListAsync(filter, loadComposition, recordsLimit, orderAttributes: orderAttributes, orderDescending: orderDescending) as IEnumerable<T>;
+        }
+        
         public int Create(T entity)
         {
             return Create(entity, false);
+        }
+
+        public async Task<int> CreateAsync(T entity)
+        {
+            return await CreateAsync(entity, false);
         }
 
         public int Edit(T entity, T filterEntity)
@@ -51,9 +67,19 @@ namespace Rochas.DapperRepository
             return Edit(entity, filterEntity, false);
         }
 
+        public async Task<int> EditAsync(T entity, T filterEntity)
+        {
+            return await EditAsync(entity, filterEntity, false);
+        }
+
         public int Delete(T filterEntity)
         {
             return Delete(filterEntity as object);
+        }
+
+        public async Task<int> DeleteAsync(T filterEntity)
+        {
+            return await DeleteAsync(filterEntity as object);
         }
 
         public int Count(T filterEntity)
@@ -64,6 +90,7 @@ namespace Rochas.DapperRepository
         #endregion
 
         #region Helper Methods
+
         private object Get(object filter, bool loadComposition = false)
         {
             return List(filter, loadComposition)?.FirstOrDefault();
@@ -95,7 +122,7 @@ namespace Rochas.DapperRepository
             return returnList;
         }
 
-        public async Task<IEnumerable<object>> ListAsync(object filterEntity, bool loadComposition = false, int recordLimit = 0, bool onlyListableAttributes = false, string showAttributes = null, Dictionary<string, double[]> rangeValues = null, string groupAttributes = null, string orderAttributes = null, bool orderDescending = false, bool readUncommited = true)
+        private async Task<IEnumerable<object>> ListAsync(object filterEntity, bool loadComposition = false, int recordLimit = 0, bool onlyListableAttributes = false, string showAttributes = null, Dictionary<string, double[]> rangeValues = null, string groupAttributes = null, string orderAttributes = null, bool orderDescending = false, bool readUncommited = true)
         {
             IEnumerable<object> returnList = null;
 
@@ -139,16 +166,48 @@ namespace Rochas.DapperRepository
 
                 lastInsertedId = ExecuteCommand(sqlInstruction);
 
-                // Clean cache entity cache data
-                var isCacheable = (entity.GetType().GetCustomAttribute(typeof(CacheableAttribute)) != null);
-                if (isCacheable)
-                    DataCache.Del(entity, true);
+                if (persistComposition)
+                    PersistComposition(entity, PersistenceAction.Create);
+                else
+                    if (!keepConnection) base.Disconnect();
+            }
+
+            // Clean cache entity cache data
+            var isCacheable = (entity.GetType().GetCustomAttribute(typeof(CacheableAttribute)) != null);
+            if (isCacheable)
+                DataCache.Del(entity, true);
+
+            // Async persistence of database replicas
+            if (replicationEnabled && !isReplicating)
+                CreateReplicas(entity, entityProps, lastInsertedId, persistComposition);
+
+            return lastInsertedId;
+        }
+
+        private async Task<int> CreateAsync(object entity, bool persistComposition, string optionalConnConfig = "", bool isReplicating = false)
+        {
+            string sqlInstruction;
+            int lastInsertedId = 0;
+
+            var entityType = entity.GetType();
+            var entityProps = entityType.GetProperties();
+
+            if (keepConnection || base.Connect(optionalConnConfig))
+            {
+                sqlInstruction = EntitySqlParser.ParseEntity(entity, PersistenceAction.Create);
+
+                lastInsertedId = await ExecuteCommandAsync(sqlInstruction);
 
                 if (persistComposition)
                     PersistComposition(entity, PersistenceAction.Create);
                 else
                     if (!keepConnection) base.Disconnect();
             }
+
+            // Clean cache entity cache data
+            var isCacheable = (entity.GetType().GetCustomAttribute(typeof(CacheableAttribute)) != null);
+            if (isCacheable)
+                DataCache.Del(entity, true);
 
             // Async persistence of database replicas
             if (replicationEnabled && !isReplicating)
@@ -175,17 +234,49 @@ namespace Rochas.DapperRepository
                 sqlInstruction = EntitySqlParser.ParseEntity(entity, PersistenceAction.Edit, filterEntity);
 
                 recordsAffected = ExecuteCommand(sqlInstruction);
+
+                if (persistComposition)
+                    PersistComposition(entity, PersistenceAction.Edit);
+                else
+                if (!keepConnection) base.Disconnect();
+            }
+
+            // Clean cache entity cache data
+            var isCacheable = (entity.GetType().GetCustomAttribute(typeof(CacheableAttribute)) != null);
+            if (isCacheable)
+                DataCache.Del(entity, true);            
+
+            // Async persistence of database replicas
+            if (base.replicationEnabled && !isReplicating)
+                EditReplicas(entity, filterEntity, entityProps, persistComposition);
+
+            return recordsAffected;
+        }
+
+        private async Task<int> EditAsync(object entity, object filterEntity, bool persistComposition, string optionalConnConfig = "", bool isReplicating = false)
+        {
+            int recordsAffected = 0;
+            string sqlInstruction;
+
+            var entityType = entity.GetType();
+            var entityProps = entityType.GetProperties();
+
+            if (keepConnection || base.Connect(optionalConnConfig))
+            {
+                sqlInstruction = EntitySqlParser.ParseEntity(entity, PersistenceAction.Edit, filterEntity);
+
+                recordsAffected = await ExecuteCommandAsync(sqlInstruction);
+
+                if (persistComposition)
+                    PersistComposition(entity, PersistenceAction.Edit);
+                else
+                if (!keepConnection) base.Disconnect();
             }
 
             // Clean cache entity cache data
             var isCacheable = (entity.GetType().GetCustomAttribute(typeof(CacheableAttribute)) != null);
             if (isCacheable)
                 DataCache.Del(entity, true);
-
-            if (persistComposition)
-                PersistComposition(entity, PersistenceAction.Edit);
-            else
-                if (!keepConnection) base.Disconnect();
 
             // Async persistence of database replicas
             if (base.replicationEnabled && !isReplicating)
@@ -207,6 +298,37 @@ namespace Rochas.DapperRepository
                 sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.Delete, filterEntity);
 
                 recordsAffected = ExecuteCommand(sqlInstruction);
+
+                PersistComposition(filterEntity, PersistenceAction.Delete);
+
+                if (!keepConnection) base.Disconnect();
+            }
+
+            // Clean cache entity cache data
+            var isCacheable = (filterEntity.GetType().GetCustomAttribute(typeof(CacheableAttribute)) != null);
+            if (isCacheable)
+                DataCache.Del(filterEntity, true);
+
+            // Async persistence of database replicas
+            if (base.replicationEnabled && !isReplicating)
+                DeleteReplicas(filterEntity, entityProps);
+
+            return recordsAffected;
+        }
+
+        private async Task<int> DeleteAsync(object filterEntity, string optionalConnConfig = "", bool isReplicating = false)
+        {
+            string sqlInstruction;
+            int recordsAffected = 0;
+
+            var entityType = filterEntity.GetType();
+            var entityProps = entityType.GetProperties();
+
+            if (keepConnection || base.Connect(optionalConnConfig))
+            {
+                sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.Delete, filterEntity);
+
+                recordsAffected = await ExecuteCommandAsync(sqlInstruction);
 
                 PersistComposition(filterEntity, PersistenceAction.Delete);
 

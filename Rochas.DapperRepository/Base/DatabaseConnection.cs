@@ -152,7 +152,7 @@ namespace Rochas.DapperRepository.Base
             return executionReturn;
         }
 
-        protected async Task<int> ExecuteCommandAsync(string sqlInstruction, Dictionary<object, object> parameters)
+        protected async Task<int> ExecuteCommandAsync(string sqlInstruction, Dictionary<object, object> parameters = null)
         {
             IDbCommand sqlCommand;
             string insertCommand = SQLStatements.SQL_ReservedWord_INSERT;
