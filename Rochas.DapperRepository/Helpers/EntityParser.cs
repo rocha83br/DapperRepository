@@ -15,7 +15,7 @@ namespace Rochas.DapperRepository.Helpers
     {
         #region Public Methods
 
-        public static string ParseEntity(object entity, PersistenceAction persistenceAction, object filterEntity = null, int recordLimit = 0, bool onlyListableAttributes = false, string showAttributes = null, IDictionary<string, double[]> rangeValues = null, string groupAttributes = null, string orderAttributes = null, bool orderDescending = false)
+        public static string ParseEntity(object entity, PersistenceAction persistenceAction, object filterEntity = null, int recordLimit = 0, bool onlyListableAttributes = false, string showAttributes = null, IDictionary<string, double[]> rangeValues = null, string groupAttributes = null, string orderAttributes = null, bool orderDescending = false, bool readUncommited = true)
         {
             try
             {
@@ -55,7 +55,7 @@ namespace Rochas.DapperRepository.Helpers
             }
         }
 
-        public static string GetSqlInstruction(object entity, PropertyInfo[] entityProps, PersistenceAction action, object filterEntity, string[] showAttributes, IDictionary<string, double[]> rangeValues, string groupAttributes)
+        public static string GetSqlInstruction(object entity, PropertyInfo[] entityProps, PersistenceAction action, object filterEntity, string[] showAttributes, IDictionary<string, double[]> rangeValues, string groupAttributes, bool readUncommited = true)
         {
             string sqlInstruction;
             Dictionary<object, object> sqlFilterData;
@@ -296,7 +296,7 @@ namespace Rochas.DapperRepository.Helpers
             return result;
         }
 
-        private static Dictionary<string, string> GetSqlParameters(Dictionary<object, object> entitySqlData, PersistenceAction action, IDictionary<object, object> entitySqlFilter, string[] showAttributes, string keyColumnName, IDictionary<string, double[]> rangeValues, string groupAttributes)
+        private static Dictionary<string, string> GetSqlParameters(Dictionary<object, object> entitySqlData, PersistenceAction action, IDictionary<object, object> entitySqlFilter, string[] showAttributes, string keyColumnName, IDictionary<string, double[]> rangeValues, string groupAttributes, bool readUncommited = true)
         {
             var returnDictionary = new Dictionary<string, string>();
             var relationshipDictionary = new Dictionary<string, string>();
@@ -539,6 +539,9 @@ namespace Rochas.DapperRepository.Helpers
                     columnList = columnList.Substring(0, columnList.Length - 2);
                     returnDictionary.Add("ColumnList", columnList);
                     returnDictionary.Add("RelationList", relationList);
+
+                    if (readUncommited)
+                        returnDictionary["TableName"] = string.Concat(returnDictionary["TableName"], " (NOLOCK)");
                 }
                 else if (!string.IsNullOrEmpty(columnValueList))
                 {

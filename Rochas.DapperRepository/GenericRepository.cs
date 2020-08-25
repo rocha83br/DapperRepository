@@ -95,7 +95,7 @@ namespace Rochas.DapperRepository
             return returnList;
         }
 
-        public async Task<IEnumerable<object>> ListAsync(object filterEntity, bool loadComposition = false, bool uniqueQuery = false, int recordLimit = 0, bool onlyListableAttributes = false, string showAttributes = null, Dictionary<string, double[]> rangeValues = null, string groupAttributes = null, string orderAttributes = null, bool orderDescending = false)
+        public async Task<IEnumerable<object>> ListAsync(object filterEntity, bool loadComposition = false, int recordLimit = 0, bool onlyListableAttributes = false, string showAttributes = null, Dictionary<string, double[]> rangeValues = null, string groupAttributes = null, string orderAttributes = null, bool orderDescending = false, bool readUncommited = true)
         {
             IEnumerable<object> returnList = null;
 
