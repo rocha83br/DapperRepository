@@ -5,6 +5,7 @@
     <Copyright>Renato Rocha</Copyright>
     <Authors>Renato Rocha</Authors>
     <Company></Company>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
