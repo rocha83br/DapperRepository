@@ -17,7 +17,7 @@ using System.IO;
 
 namespace Rochas.DapperRepository
 {
-    public class GenericRepository<T> : DataBaseConnection, IDisposable where T : class
+    public class GenericRepository<T> : DataBaseConnection, IDisposable, IGenericRepository<T> where T : class
     {
         #region Constructors
         
