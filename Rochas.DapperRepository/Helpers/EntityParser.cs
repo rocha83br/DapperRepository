@@ -71,7 +71,7 @@ namespace Rochas.DapperRepository.Helpers
             if (tableAnnotation != null)
             {
                 var tableName = string.Format("{0}.{1}", tableAnnotation.Schema, tableAnnotation.Name);
-                objectSQLDataRelation.Add("TableName", tableAnnotation.Name);
+                objectSQLDataRelation.Add("TableName", tableName);
             }
 
             foreach (var prop in entityProperties)
@@ -627,8 +627,9 @@ namespace Rochas.DapperRepository.Helpers
                             columnValue = SqlDefaultValue.Null;
                         break;
                     case SQL.DataType.String:
-                        if (!string.IsNullOrWhiteSpace(columnValue.ToString()))
-                            columnValue = string.Concat("'", columnValue, "'");
+                        var strValue = columnValue.ToString().Replace("'", "\"");
+                        if (!string.IsNullOrWhiteSpace(strValue))
+                            columnValue = string.Concat("'", strValue, "'");
                         else
                             columnValue = SqlDefaultValue.Null;
 

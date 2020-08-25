@@ -38,29 +38,37 @@ namespace Rochas.DapperRepository.Base
 
         public void StartTransaction()
         {
-            if (connection.State != ConnectionState.Open)
-                Connect();
+            if ((connection == null) 
+                || (connection.State != ConnectionState.Open))
+                keepConnection = Connect();
 
             this.transactionControl = connection.BeginTransaction();
         }
 
         public void CommitTransaction()
         {
-            if ((connection.State == ConnectionState.Open)
+            if ((connection != null) && (connection.State == ConnectionState.Open)
                 && (transactionControl != null))
+            {
                 transactionControl.Commit();
+                keepConnection = false;
+            }
         }
 
         public void CancelTransaction()
         {
-            if ((connection.State == ConnectionState.Open)
+            if ((connection != null) && (connection.State == ConnectionState.Open)
                 && (transactionControl != null))
+            {
                 transactionControl.Rollback();
+                keepConnection = false;
+            }
         }
 
         public void Dispose()
         {
-            connection.Dispose();
+            if (connection != null)
+                connection.Dispose();
 
             if (transactionControl != null)
                 transactionControl.Dispose();
