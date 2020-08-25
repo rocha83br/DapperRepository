@@ -6,6 +6,8 @@
     <Authors>Renato Rocha</Authors>
     <Company></Company>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/rocha83br/DapperRepository/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/rocha83br/DapperRepository</PackageProjectUrl>
   </PropertyGroup>
 
   <ItemGroup>
