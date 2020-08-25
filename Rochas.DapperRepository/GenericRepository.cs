@@ -38,9 +38,8 @@ namespace Rochas.DapperRepository
 
         public async Task<T> GetAsync(T filter, bool loadComposition = false)
         {
-            var result = await ListAsync(filter, loadComposition);
-
-            return result?.FirstOrDefault() as T;
+            var resultList = await ListAsync(filter, loadComposition);
+            return resultList?.FirstOrDefault();
         }
 
         public IEnumerable<T> List(T filter, bool loadComposition, int recordsLimit = 0, string orderAttributes = null, bool orderDescending = false)
@@ -49,7 +48,13 @@ namespace Rochas.DapperRepository
         }
         public async Task<IEnumerable<T>> ListAsync(T filter, bool loadComposition, int recordsLimit = 0, string orderAttributes = null, bool orderDescending = false)
         {
-            return await ListAsync(filter, loadComposition, recordsLimit, orderAttributes: orderAttributes, orderDescending: orderDescending) as IEnumerable<T>;
+            var result = new List<T>();
+            var resultList = await ListAsync(filter as object, loadComposition, recordsLimit, orderAttributes: orderAttributes, orderDescending: orderDescending);
+            if (resultList != null)
+                foreach (var item in resultList)
+                    result.Add(item as T);
+
+            return result;
         }
         
         public int Create(T entity)
@@ -168,7 +173,7 @@ namespace Rochas.DapperRepository
         {
             IEnumerable<object> returnList = null;
 
-            var sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.List);
+            var sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.List, filterEntity);
 
             if (keepConnection || base.Connect())
             {
