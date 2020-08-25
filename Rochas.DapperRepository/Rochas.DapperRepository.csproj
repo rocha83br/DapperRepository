@@ -7,7 +7,10 @@
     <Company></Company>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseUrl>https://raw.githubusercontent.com/rocha83br/DapperRepository/master/LICENSE</PackageLicenseUrl>
-    <PackageProjectUrl>https://github.com/rocha83br/DapperRepository</PackageProjectUrl>
+    <PackageProjectUrl></PackageProjectUrl>
+    <RepositoryType>Git</RepositoryType>
+    <RepositoryUrl>https://github.com/rocha83br/DapperRepository</RepositoryUrl>
+    <PackageTags>dapper light lightweight generic repository entity entities database persistence CRUD POCO</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
