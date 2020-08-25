@@ -17,7 +17,7 @@ using System.IO;
 
 namespace Rochas.DapperRepository
 {
-    public class GenericRepository<T> : DataBaseConnection, IDisposable where T : class, IEntityIdentity
+    public class GenericRepository<T> : DataBaseConnection, IDisposable where T : class
     {
         #region Constructors
         
@@ -73,18 +73,18 @@ namespace Rochas.DapperRepository
         {
             IEnumerable<object> returnList = null;
 
-            // Obtendo a instrução SQL via helper
+            // Getting SQL statement from Helper
             var sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.List, filterEntity, recordLimit, onlyListableAttributes, showAttributes, rangeValues, groupAttributes, orderAttributes, orderDescending);
 
             if (keepConnection || Connect())
             {
-                // Obtendo retorno do banco com Dapper
+                // Getting database return using Dapper
                 returnList = ExecuteQuery(filterEntity.GetType(), sqlInstruction);
             }
 
             if (!keepConnection) Disconnect();
 
-            // Efetuando carga da composição quando existente (Eager Loading)
+            // Perform the composition data load when exists (Eager Loading)
             if (loadComposition && (returnList != null) && returnList.Any())
             {
                 var itemProps = returnList.First().GetType().GetProperties();
@@ -103,13 +103,13 @@ namespace Rochas.DapperRepository
 
             if (keepConnection || base.Connect())
             {
-                // Obtendo retorno do banco com Dapper
+                // Getting database return using Dapper
                 returnList = await ExecuteQueryAsync(filterEntity.GetType(), sqlInstruction);
             }
 
             if (!keepConnection) base.Disconnect();
 
-            // Efetuando carga da composição quando existente (Eager Loading)
+            // Perform the composition data load when exists (Eager Loading)
             if (loadComposition && (returnList != null) && returnList.Any())
             {
                 var itemProps = returnList.First().GetType().GetProperties();
@@ -139,7 +139,7 @@ namespace Rochas.DapperRepository
 
                 lastInsertedId = ExecuteCommand(sqlInstruction);
 
-                // Efetua a limpeza do cache para a entidade em questão
+                // Clean cache entity cache data
                 var isCacheable = (entity.GetType().GetCustomAttribute(typeof(CacheableAttribute)) != null);
                 if (isCacheable)
                     DataCache.Del(entity, true);
@@ -150,7 +150,7 @@ namespace Rochas.DapperRepository
                     if (!keepConnection) base.Disconnect();
             }
 
-            // Persistencia assincrona das replicas nos demais servidores
+            // Async persistence of database replicas
             if (replicationEnabled && !isReplicating)
                 CreateReplicas(entity, entityProps, lastInsertedId, persistComposition);
 
@@ -177,7 +177,7 @@ namespace Rochas.DapperRepository
                 recordsAffected = ExecuteCommand(sqlInstruction);
             }
 
-            // Efetua a limpeza do cache para a entidade em questão
+            // Clean cache entity cache data
             var isCacheable = (entity.GetType().GetCustomAttribute(typeof(CacheableAttribute)) != null);
             if (isCacheable)
                 DataCache.Del(entity, true);
@@ -187,7 +187,7 @@ namespace Rochas.DapperRepository
             else
                 if (!keepConnection) base.Disconnect();
 
-            // Persistencia assincrona da composicao e/ou replica nos demais servidores
+            // Async persistence of database replicas
             if (base.replicationEnabled && !isReplicating)
                 EditReplicas(entity, filterEntity, entityProps, persistComposition);
 
@@ -213,11 +213,12 @@ namespace Rochas.DapperRepository
                 if (!keepConnection) base.Disconnect();
             }
 
-            // Efetua a limpeza do cache para a entidade em questão
+            // Clean cache entity cache data
             var isCacheable = (filterEntity.GetType().GetCustomAttribute(typeof(CacheableAttribute)) != null);
             if (isCacheable)
                 DataCache.Del(filterEntity, true);
 
+            // Async persistence of database replicas
             if (base.replicationEnabled && !isReplicating)
                 DeleteReplicas(filterEntity, entityProps);
 

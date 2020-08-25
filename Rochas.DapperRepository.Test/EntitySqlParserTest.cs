@@ -11,12 +11,12 @@ namespace Rochas.DapperRepository.Test
         [Fact]
         public void GetTest()
         {;
-            var testFilter = new SampleEntity() { Id = 10 };
+            var testFilter = new SampleEntity() { DocNumber = 12345 };
             var result = EntitySqlParser.ParseEntity(testFilter, PersistenceAction.Get, testFilter);
 
             Assert.NotNull(result);
             Assert.StartsWith("SELECT", result);
-            Assert.EndsWith(string.Format("WHERE {0}.{1} = 10", nameof(SampleEntity), "Id"), result.Trim());
+            Assert.EndsWith(string.Format("WHERE {0}.{1} = 12345", nameof(SampleEntity), "DocNumber"), result.Trim());
         }
 
         [Fact]
@@ -34,7 +34,7 @@ namespace Rochas.DapperRepository.Test
         [Fact]
         public void CreateTest()
         {
-            var sampleEntity = new SampleEntity();
+            var sampleEntity = new SampleEntity() { DocNumber = 12345 };
             var result = EntitySqlParser.ParseEntity(sampleEntity, PersistenceAction.Create);
 
             Assert.NotNull(result);
@@ -49,24 +49,24 @@ namespace Rochas.DapperRepository.Test
         public void EditTest()
         {
             var editedEntity = new SampleEntity() { Name = "roberto gomes", Age = 35 };
-            var filterEntity = new SampleEntity() { Id = 10 };
+            var filterEntity = new SampleEntity() { DocNumber = 12345 };
             var result = EntitySqlParser.ParseEntity(editedEntity, PersistenceAction.Edit, filterEntity);
 
             Assert.NotNull(result);
             Assert.StartsWith("UPDATE", result);
             Assert.Contains("SET", result);
-            Assert.EndsWith(string.Format("WHERE {0}.{1} = 10", nameof(SampleEntity), "Id"), result.Trim());
+            Assert.EndsWith(string.Format("WHERE {0}.{1} = 12345", nameof(SampleEntity), "DocNumber"), result.Trim());
         }
 
         [Fact]
         public void DeleteTest()
         {
-            var filterEntity = new SampleEntity() { Id = 10 };
+            var filterEntity = new SampleEntity() { DocNumber = 12345 };
             var result = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.Delete, filterEntity);
 
             Assert.NotNull(result);
             Assert.StartsWith("DELETE FROM", result);
-            Assert.EndsWith(string.Format("WHERE {0}.{1} = 10", nameof(SampleEntity), "Id"), result.Trim());
+            Assert.EndsWith(string.Format("WHERE {0}.{1} = 12345", nameof(SampleEntity), "DocNumber"), result.Trim());
         }
 
         [Fact]

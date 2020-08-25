@@ -25,6 +25,14 @@ namespace Rochas.DapperRepository.Helpers
 
                 var entityProps = entity.GetType().GetProperties();
 
+                // Model validation
+                if (!VerifyTableAnnotation(entity))
+                    throw new InvalidOperationException("Entity table annotation not found. Please review model definition.");
+
+                if (GetKeyColumn(entityProps) == null)
+                    throw new KeyNotFoundException("Entity key column annotation not found. Please review model definition.");
+                //
+
                 if (onlyListableAttributes)
                     ValidateListableAttributes(entityProps, showAttributes, out displayAttributes);
 
@@ -152,7 +160,7 @@ namespace Rochas.DapperRepository.Helpers
             IEnumerable<PropertyInfo> listableAttributes = null;
             bool notListableAttribute = false;
 
-            listableAttributes = entityProps.Where(prp => ((PropertyInfo)prp).GetCustomAttributes(true).
+            listableAttributes = entityProps.Where(prp => prp.GetCustomAttributes(true).
                                              Where(ca => (ca is ListableAttribute)).Any());
 
             if (string.IsNullOrWhiteSpace(showProperties))
@@ -294,6 +302,11 @@ namespace Rochas.DapperRepository.Helpers
             }
 
             return result;
+        }
+
+        private static bool VerifyTableAnnotation(object entity)
+        {
+            return (entity.GetType().GetCustomAttribute(typeof(TableAttribute)) != null);
         }
 
         private static Dictionary<string, string> GetSqlParameters(Dictionary<object, object> entitySqlData, PersistenceAction action, IDictionary<object, object> entitySqlFilter, string[] showAttributes, string keyColumnName, IDictionary<string, double[]> rangeValues, string groupAttributes, bool readUncommited = true)
