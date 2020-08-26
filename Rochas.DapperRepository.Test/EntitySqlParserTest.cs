@@ -16,7 +16,7 @@ namespace Rochas.DapperRepository.Test
 
             Assert.NotNull(result);
             Assert.StartsWith("SELECT", result);
-            Assert.EndsWith(string.Format("WHERE {0}.{1} = 12345", nameof(SampleEntity), "DocNumber"), result.Trim());
+            Assert.EndsWith(string.Format("WHERE {0}.{1} = 12345", "dbo.SampleEntity", "DocNumber"), result.Trim());
         }
 
         [Fact]
@@ -28,7 +28,7 @@ namespace Rochas.DapperRepository.Test
             Assert.NotNull(result);
             Assert.StartsWith("SELECT", result);
             Assert.Contains("FROM", result);
-            Assert.EndsWith(string.Format("WHERE {0}.{1} LIKE '%roberto%'", nameof(SampleEntity), "Name"), result.Trim());
+            Assert.EndsWith(string.Format("WHERE {0}.{1} LIKE '%roberto%'", "dbo.SampleEntity", "Name"), result.Trim());
         }
 
         [Fact]
@@ -55,7 +55,7 @@ namespace Rochas.DapperRepository.Test
             Assert.NotNull(result);
             Assert.StartsWith("UPDATE", result);
             Assert.Contains("SET", result);
-            Assert.EndsWith(string.Format("WHERE {0}.{1} = 12345", nameof(SampleEntity), "DocNumber"), result.Trim());
+            Assert.EndsWith(string.Format("WHERE {0}.{1} = 12345", "dbo.SampleEntity", "DocNumber"), result.Trim());
         }
 
         [Fact]
@@ -66,19 +66,19 @@ namespace Rochas.DapperRepository.Test
 
             Assert.NotNull(result);
             Assert.StartsWith("DELETE FROM", result);
-            Assert.EndsWith(string.Format("WHERE {0}.{1} = 12345", nameof(SampleEntity), "DocNumber"), result.Trim());
+            Assert.EndsWith(string.Format("WHERE {0}.{1} = 12345", "dbo.SampleEntity", "DocNumber"), result.Trim());
         }
 
         [Fact]
         public void CountTest()
         {
-            //var filterEntity = new SampleEntity() { Id = 10 };
-            //var result = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.Count, filterEntity);
+            var filterEntity = new SampleEntity() { DocNumber = 12345 };
+            var result = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.Count, filterEntity);
 
-            //Assert.NotNull(result);
-            //Assert.StartsWith("SELECT COUNT", result);
-            //Assert.Contains("FROM", result);
-            //Assert.EndsWith(string.Format("WHERE {0}.{1} = 10", nameof(SampleEntity), "Id"), result.Trim());
+            Assert.NotNull(result);
+            Assert.StartsWith("SELECT COUNT", result);
+            Assert.Contains("FROM", result);
+            Assert.EndsWith(string.Format("WHERE {0}.{1} = 12345", "dbo.SampleEntity", "DocNumber"), result.Trim());
         }
     }
 }
