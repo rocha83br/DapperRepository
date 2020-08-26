@@ -14,6 +14,7 @@ using System.Data;
 using Rochas.DapperRepository.Helpers.SQL;
 using Newtonsoft.Json;
 using System.IO;
+using Dapper;
 
 namespace Rochas.DapperRepository
 {
@@ -132,6 +133,11 @@ namespace Rochas.DapperRepository
         public int Count(T filterEntity)
         {
             return Count(filterEntity as object);
+        }
+
+        public async Task<int> CountAsync(T filterEntity)
+        {
+            return await CountAsync(filterEntity as object);
         }
 
         #endregion
@@ -389,9 +395,40 @@ namespace Rochas.DapperRepository
             return recordsAffected;
         }
 
-        public int Count(object entity)
+        public int Count(object filterEntity)
         {
-            throw new NotImplementedException();
+            int result = 0;
+
+            // Getting SQL statement from Helper
+            var sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.Count, filterEntity);
+
+            if (keepConnection || Connect())
+            {
+                // Getting database return using Dapper
+                result = ExecuteCommand(sqlInstruction);
+            }
+
+            if (!keepConnection) Disconnect();
+
+            return result;
+        }
+
+        public async Task<int> CountAsync(object filterEntity)
+        {
+            int result = 0;
+
+            // Getting SQL statement from Helper
+            var sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.Count, filterEntity);
+
+            if (keepConnection || Connect())
+            {
+                // Getting database return using Dapper
+                result = await ExecuteCommandAsync(sqlInstruction);
+            }
+
+            if (!keepConnection) Disconnect();
+
+            return result;
         }
 
         private void FillComposition(object loadedEntity, PropertyInfo[] entityProps)

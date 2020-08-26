@@ -16,6 +16,9 @@ namespace Rochas.DapperRepository.Base
         #region Declarations
 
         private DatabaseEngine engine;
+        private readonly string insertCommand = SQLStatements.SQL_ReservedWord_INSERT;
+        private readonly string countCommand = SQLStatements.SQL_ReservedWord_COUNT;
+
         protected bool keepConnection = false;
         protected IDbConnection connection;
         protected IDbTransaction transactionControl;
@@ -140,7 +143,6 @@ namespace Rochas.DapperRepository.Base
         protected int ExecuteCommand(string sqlInstruction, Dictionary<object, object> parameters = null)
         {
             IDbCommand sqlCommand;
-            string insertCommand = SQLStatements.SQL_ReservedWord_INSERT;
 
             int executionReturn = 0;
 
@@ -148,18 +150,21 @@ namespace Rochas.DapperRepository.Base
             {
                 sqlCommand = CompositeCommand(sqlInstruction, parameters);
 
-                int insertedKey = 0;
-                if (sqlCommand.CommandText.Contains(insertCommand))
+                if (sqlCommand.CommandText.StartsWith(insertCommand)
+                    || sqlCommand.CommandText.Contains(countCommand))
                 {
-                    sqlCommand.ExecuteNonQuery();
-                    sqlCommand.CommandText = SQLStatements.SQL_Action_GetLastId;
-                    int.TryParse(sqlCommand.ExecuteScalar().ToString(), out insertedKey);
-                    executionReturn = insertedKey;
+                    if (sqlCommand.CommandText.StartsWith(insertCommand))
+                    {
+                        sqlCommand.ExecuteNonQuery();
+                        sqlCommand.CommandText = SQLStatements.SQL_Action_GetLastId;
+                    }
+
+                    int scalarReturn;
+                    int.TryParse(sqlCommand.ExecuteScalar().ToString(), out scalarReturn);
+                    executionReturn = scalarReturn;
                 }
                 else
                     executionReturn = sqlCommand.ExecuteNonQuery();
-
-                sqlCommand = null;
             }
 
             return executionReturn;
@@ -168,7 +173,6 @@ namespace Rochas.DapperRepository.Base
         protected async Task<int> ExecuteCommandAsync(string sqlInstruction, Dictionary<object, object> parameters = null)
         {
             IDbCommand sqlCommand;
-            string insertCommand = SQLStatements.SQL_ReservedWord_INSERT;
 
             int executionReturn = 0;
 
@@ -176,19 +180,21 @@ namespace Rochas.DapperRepository.Base
             {
                 sqlCommand = CompositeCommand(sqlInstruction, parameters);
 
-                int insertedKey = 0;
-                if (sqlCommand.CommandText.Contains(insertCommand))
+                if (sqlCommand.CommandText.StartsWith(insertCommand)
+                    || sqlCommand.CommandText.Contains(countCommand))
                 {
-                    sqlCommand.ExecuteNonQuery();
-                    var command = SQLStatements.SQL_Action_GetLastId;
-                    var lastId = await connection.ExecuteScalarAsync(command);
-                    int.TryParse(lastId.ToString(), out insertedKey);
-                    executionReturn = insertedKey;
+                    if (sqlCommand.CommandText.StartsWith(insertCommand))
+                    {
+                        sqlCommand.ExecuteNonQuery();
+                        sqlCommand.CommandText = SQLStatements.SQL_Action_GetLastId;
+                    }
+
+                    int scalarReturn;
+                    int.TryParse(sqlCommand.ExecuteScalar().ToString(), out scalarReturn);
+                    executionReturn = scalarReturn;
                 }
                 else
                     executionReturn = await connection.ExecuteAsync(sqlInstruction);
-
-                sqlCommand = null;
             }
 
             return executionReturn;

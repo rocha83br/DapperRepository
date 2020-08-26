@@ -70,7 +70,13 @@ namespace Rochas.DapperRepository.Helpers
             var tableAnnotation = entity.GetType().GetCustomAttribute(typeof(TableAttribute)) as TableAttribute;
             if (tableAnnotation != null)
             {
-                var tableName = string.Format("{0}.{1}", tableAnnotation.Schema, tableAnnotation.Name);
+                var tableName = string.Empty;
+
+                if (!string.IsNullOrWhiteSpace(tableAnnotation.Schema))
+                    tableName = string.Format("{0}.{1}", tableAnnotation.Schema, tableAnnotation.Name);
+                else
+                    tableName = string.Format("{0}", tableAnnotation.Name);
+
                 objectSQLDataRelation.Add("TableName", tableName);
             }
 
@@ -401,15 +407,19 @@ namespace Rochas.DapperRepository.Helpers
 
                         if ((action == PersistenceAction.Max) && (annotation.AggregationType == DataAggregationType.Maximum))
                             columnList += string.Format(SQLStatements.SQL_Action_MaximumAggregation,
-                                                        tableName, annotation.ColumnName, item.Key);
+                                                        tableName, annotation.ColumnName, entityAttributeName);
                         else if ((action == PersistenceAction.Count) && (annotation.AggregationType == DataAggregationType.Count))
                             columnList += string.Format(SQLStatements.SQL_Action_CountAggregation,
-                                                        tableName, annotation.ColumnName, item.Key);
+                                                        tableName, annotation.ColumnName, entityAttributeName);
                     }
                     else
                     {
                         object entityColumnValue = ((KeyValuePair<object, object>)item.Value).Value;
                         isCustomColumn = !entityAttributeName.Equals(entityColumnName);
+
+                        if ((showAttributes != null) && (showAttributes.Length > 0))
+                            for (int counter = 0; counter < showAttributes.Length; counter++)
+                                showAttributes[counter] = showAttributes[counter].Trim();
 
                         switch (action)
                         {
@@ -419,9 +429,7 @@ namespace Rochas.DapperRepository.Helpers
 
                                 break;
                             case PersistenceAction.List:
-                                if ((showAttributes != null) && (showAttributes.Length > 0))
-                                    for (int counter = 0; counter < showAttributes.Length; counter++)
-                                        showAttributes[counter] = showAttributes[counter].Trim();
+                                
                                 if (((showAttributes == null) || (showAttributes.Length == 0))
                                     || showAttributes.Length > 0 && Array.IndexOf(showAttributes, entityAttributeName) > -1)
                                 {
@@ -431,15 +439,20 @@ namespace Rochas.DapperRepository.Helpers
 
                                 break;
                             case PersistenceAction.Get:
-                                if (showAttributes.Length > 0)
-                                    for (int counter = 0; counter < showAttributes.Length; counter++)
-                                        showAttributes[counter] = showAttributes[counter].Trim();
+                                
                                 if ((showAttributes.Length == 0)
                                     || showAttributes.Length > 0 && Array.IndexOf(showAttributes, entityAttributeName) > -1)
                                 {
                                     var columnAlias = isCustomColumn ? string.Format(" AS {0}", entityAttributeName) : string.Empty;
                                     columnList += string.Format("{0}.{1}{2}, ", tableName, entityColumnName, columnAlias);
                                 }
+
+                                break;
+                            case PersistenceAction.Count:
+
+                                if (entityColumnName.Equals(keyColumnName))
+                                    columnList += string.Format(SQLStatements.SQL_Action_CountAggregation, 
+                                                                tableName, entityColumnName, entityAttributeName);
 
                                 break;
                             default: // Alteração e Exclusão
