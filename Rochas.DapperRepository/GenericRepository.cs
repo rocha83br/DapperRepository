@@ -228,10 +228,7 @@ namespace Rochas.DapperRepository
                     if (!keepConnection) base.Disconnect();
             }
 
-            // Clean cache entity cache data
-            var isCacheable = (entity.GetType().GetCustomAttribute(typeof(CacheableAttribute)) != null);
-            if (isCacheable)
-                DataCache.Del(entity, true);
+            CleanCacheableData(entity);
 
             // Async persistence of database replicas
             if (replicationEnabled && !isReplicating)
@@ -263,10 +260,7 @@ namespace Rochas.DapperRepository
                     if (!keepConnection) base.Disconnect();
             }
 
-            // Clean cache entity cache data
-            var isCacheable = (entity.GetType().GetCustomAttribute(typeof(CacheableAttribute)) != null);
-            if (isCacheable)
-                DataCache.Del(entity, true);
+            CleanCacheableData(entity);
 
             // Async persistence of database replicas
             if (replicationEnabled && !isReplicating)
@@ -298,10 +292,7 @@ namespace Rochas.DapperRepository
                 if (!keepConnection) base.Disconnect();
             }
 
-            // Clean cache entity cache data
-            var isCacheable = (entity.GetType().GetCustomAttribute(typeof(CacheableAttribute)) != null);
-            if (isCacheable)
-                DataCache.Del(entity, true);
+            CleanCacheableData(entity);
 
             // Async persistence of database replicas
             if (base.replicationEnabled && !isReplicating)
@@ -333,10 +324,7 @@ namespace Rochas.DapperRepository
                 if (!keepConnection) base.Disconnect();
             }
 
-            // Clean cache entity cache data
-            var isCacheable = (entity.GetType().GetCustomAttribute(typeof(CacheableAttribute)) != null);
-            if (isCacheable)
-                DataCache.Del(entity, true);
+            CleanCacheableData(entity);
 
             // Async persistence of database replicas
             if (base.replicationEnabled && !isReplicating)
@@ -364,10 +352,7 @@ namespace Rochas.DapperRepository
                 if (!keepConnection) base.Disconnect();
             }
 
-            // Clean cache entity cache data
-            var isCacheable = (filterEntity.GetType().GetCustomAttribute(typeof(CacheableAttribute)) != null);
-            if (isCacheable)
-                DataCache.Del(filterEntity, true);
+            CleanCacheableData(filterEntity);
 
             // Async persistence of database replicas
             if (base.replicationEnabled && !isReplicating)
@@ -395,10 +380,7 @@ namespace Rochas.DapperRepository
                 if (!keepConnection) base.Disconnect();
             }
 
-            // Clean cache entity cache data
-            var isCacheable = (filterEntity.GetType().GetCustomAttribute(typeof(CacheableAttribute)) != null);
-            if (isCacheable)
-                DataCache.Del(filterEntity, true);
+            CleanCacheableData(filterEntity);
 
             // Async persistence of database replicas
             if (base.replicationEnabled && !isReplicating)
@@ -647,19 +629,6 @@ namespace Rochas.DapperRepository
             return result;
         }
 
-        private DataSet GetEntityDataSet(object entity)
-        {
-            var entityProps = entity.GetType().GetProperties();
-            var entityInfo = EntitySqlParser.GetPropertiesValueList(entity, entityProps, PersistenceAction.Create);
-            var entityColumns = entityInfo.Select(ifo => ifo.Value).ToList();
-
-            var result = new DataSet(entityInfo["TableName"] as string);
-            foreach (var column in entityColumns.Where(c => c is IDictionary))
-                result.Tables[0].Columns.Add(((KeyValuePair<object, object>)column).Key.ToString());
-
-            return result;
-        }
-
         private void CreateReplicas(object entity, PropertyInfo[] entityProps, int lastInsertedId, bool persistComposition)
         {
             var entityColumnKey = EntitySqlParser.GetKeyColumn(entityProps);
@@ -786,6 +755,13 @@ namespace Rochas.DapperRepository
             {
                 RegisterException("PersistReplicas", ex, param);
             }
+        }
+
+        private void CleanCacheableData(object entity)
+        {
+            var isCacheable = (entity.GetType().GetCustomAttribute(typeof(CacheableAttribute)) != null);
+            if (isCacheable)
+                DataCache.Del(entity, true);
         }
 
         private void RegisterException(string operationName, Exception exception, object content)
