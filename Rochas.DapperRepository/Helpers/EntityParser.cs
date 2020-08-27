@@ -326,12 +326,11 @@ namespace Rochas.DapperRepository.Helpers
             string columnValueList = string.Empty;
             string columnFilterList = string.Empty;
             string relationList = string.Empty;
-            string relation = string.Empty;
-            bool rangeFilter = false;
+            string relation;
 
             string entityAttributeName = string.Empty;
             string entityColumnName = string.Empty;
-            bool isCustomColumn = false;
+            bool isCustomColumn;
 
             if (entitySqlData != null)
                 foreach (var item in entitySqlData)
@@ -440,7 +439,7 @@ namespace Rochas.DapperRepository.Helpers
                                 break;
                             case PersistenceAction.Get:
                                 
-                                if ((showAttributes.Length == 0)
+                                if (((showAttributes == null) || showAttributes.Length == 0)
                                     || showAttributes.Length > 0 && Array.IndexOf(showAttributes, entityAttributeName) > -1)
                                 {
                                     var columnAlias = isCustomColumn ? string.Format(" AS {0}", entityAttributeName) : string.Empty;
@@ -470,84 +469,7 @@ namespace Rochas.DapperRepository.Helpers
                 }
 
             if (entitySqlFilter != null)
-            {
-                foreach (var filter in entitySqlFilter)
-                {
-                    if (!filter.Key.Equals("TableName") && !filter.Key.Equals("RelatedEntity"))
-                    {
-                        object filterColumnName = null;
-                        object filterColumnValue = null;
-                        object columnName = null;
-                        string columnNameStr = string.Empty;
-
-                        if (!(((KeyValuePair<object, object>)filter.Value).Key is RelationalColumn))
-                        {
-                            columnName = ((KeyValuePair<object, object>)filter.Value).Key;
-                            filterColumnName = string.Concat(tableName, ".", columnName);
-                            filterColumnValue = ((KeyValuePair<object, object>)filter.Value).Value;
-                        }
-                        else
-                        {
-                            RelationalColumn relationConfig = ((KeyValuePair<object, object>)filter.Value).Key as RelationalColumn;
-
-                            if ((action == PersistenceAction.List) && relationConfig.Filterable)
-                            {
-                                filterColumnName = string.Concat(relationConfig.TableName.ToLower(), ".", relationConfig.ColumnName);
-                                filterColumnValue = ((KeyValuePair<object, object>)filter.Value).Value;
-                            }
-                        }
-
-                        if (rangeValues != null)
-                        {
-                            columnNameStr = columnName.ToString();
-                            rangeFilter = rangeValues.ContainsKey(columnNameStr);
-                        }
-
-                        if (((filterColumnValue != null)
-                                && (filterColumnValue.ToString() != SqlDefaultValue.Null)
-                                && (filterColumnValue.ToString() != SqlDefaultValue.Zero))
-                            || rangeFilter)
-                        {
-                            long fake;
-                            bool compareRule = (action == PersistenceAction.List)
-                                             && !long.TryParse(filterColumnValue.ToString(), out fake)
-                                             && !filterColumnName.ToString().ToLower().Contains("date")
-                                             && !filterColumnName.ToString().ToLower().Contains("hash")
-                                             && !filterColumnName.ToString().ToLower().StartsWith("id")
-                                             && !filterColumnName.ToString().ToLower().EndsWith("id")
-                                             && !filterColumnName.ToString().ToLower().Contains(".id");
-
-                            string comparation = string.Empty;
-
-                            if (!rangeFilter)
-                            {
-                                comparation = (compareRule)
-                                              ? string.Format(SqlOperator.Contains, filterColumnValue.ToString().Replace("'", string.Empty))
-                                              : string.Concat(SqlOperator.Equal, filterColumnValue);
-
-                                if (filterColumnValue.Equals(true))
-                                    comparation = " = 1";
-
-                                if ((action == PersistenceAction.Edit) && filterColumnValue.Equals(false))
-                                    comparation = " = 0";
-
-                                if (!filterColumnValue.Equals(false))
-                                    columnFilterList += filterColumnName + comparation +
-                                        ((compareRule) ? SqlOperator.Or : SqlOperator.And);
-                            }
-                            else
-                            {
-                                double rangeFrom = rangeValues[columnNameStr][0];
-                                double rangeTo = rangeValues[columnNameStr][1];
-
-                                comparation = string.Format(SqlOperator.Between, rangeFrom, rangeTo);
-
-                                columnFilterList += string.Concat(filterColumnName, " ", comparation, SqlOperator.And);
-                            }
-                        }
-                    }
-                }
-            }
+                GetFilterSqlParameters(entitySqlFilter, tableName, action, rangeValues, columnFilterList);
 
             if (action == PersistenceAction.Create)
             {
@@ -621,6 +543,88 @@ namespace Rochas.DapperRepository.Helpers
             return (entityKeyColumn.GetValue(entity, null).ToString().Equals(SqlDefaultValue.Zero))
                     ? PersistenceAction.Create : PersistenceAction.Edit;
         }
+
+        private static void GetFilterSqlParameters(IDictionary<object, object> entitySqlFilter, string tableName, PersistenceAction action, IDictionary<string, double[]> rangeValues, string columnFilterList)
+        {
+            foreach (var filter in entitySqlFilter)
+            {
+                if (!filter.Key.Equals("TableName") && !filter.Key.Equals("RelatedEntity"))
+                {
+                    object filterColumnName = null;
+                    object filterColumnValue = null;
+                    object columnName = null;
+                    string columnNameStr = string.Empty;
+
+                    if (!(((KeyValuePair<object, object>)filter.Value).Key is RelationalColumn))
+                    {
+                        columnName = ((KeyValuePair<object, object>)filter.Value).Key;
+                        filterColumnName = string.Concat(tableName, ".", columnName);
+                        filterColumnValue = ((KeyValuePair<object, object>)filter.Value).Value;
+                    }
+                    else
+                    {
+                        RelationalColumn relationConfig = ((KeyValuePair<object, object>)filter.Value).Key as RelationalColumn;
+
+                        if ((action == PersistenceAction.List) && relationConfig.Filterable)
+                        {
+                            filterColumnName = string.Concat(relationConfig.TableName.ToLower(), ".", relationConfig.ColumnName);
+                            filterColumnValue = ((KeyValuePair<object, object>)filter.Value).Value;
+                        }
+                    }
+
+                    var rangeFilter = false;
+                    if (rangeValues != null)
+                    {
+                        columnNameStr = columnName.ToString();
+                        rangeFilter = rangeValues.ContainsKey(columnNameStr);
+                    }
+
+                    if (((filterColumnValue != null)
+                            && (filterColumnValue.ToString() != SqlDefaultValue.Null)
+                            && (filterColumnValue.ToString() != SqlDefaultValue.Zero))
+                        || rangeFilter)
+                    {
+                        long fake;
+                        bool compareRule = (action == PersistenceAction.List)
+                                         && !long.TryParse(filterColumnValue.ToString(), out fake)
+                                         && !filterColumnName.ToString().ToLower().Contains("date")
+                                         && !filterColumnName.ToString().ToLower().Contains("hash")
+                                         && !filterColumnName.ToString().ToLower().StartsWith("id")
+                                         && !filterColumnName.ToString().ToLower().EndsWith("id")
+                                         && !filterColumnName.ToString().ToLower().Contains(".id");
+
+                        string comparation = string.Empty;
+
+                        if (!rangeFilter)
+                        {
+                            comparation = (compareRule)
+                                          ? string.Format(SqlOperator.Contains, filterColumnValue.ToString().Replace("'", string.Empty))
+                                          : string.Concat(SqlOperator.Equal, filterColumnValue);
+
+                            if (filterColumnValue.Equals(true))
+                                comparation = " = 1";
+
+                            if ((action == PersistenceAction.Edit) && filterColumnValue.Equals(false))
+                                comparation = " = 0";
+
+                            if (!filterColumnValue.Equals(false))
+                                columnFilterList += filterColumnName + comparation +
+                                    ((compareRule) ? SqlOperator.Or : SqlOperator.And);
+                        }
+                        else
+                        {
+                            double rangeFrom = rangeValues[columnNameStr][0];
+                            double rangeTo = rangeValues[columnNameStr][1];
+
+                            comparation = string.Format(SqlOperator.Between, rangeFrom, rangeTo);
+
+                            columnFilterList += string.Concat(filterColumnName, " ", comparation, SqlOperator.And);
+                        }
+                    }
+                }
+            }
+        }
+
         private static object FormatSQLInputValue(PropertyInfo column, object columnValue, PersistenceAction action)
         {
             if (columnValue != null)
