@@ -21,13 +21,13 @@ namespace Rochas.DapperRepository
     public class GenericRepository<T> : DataBaseConnection, IDisposable, IGenericRepository<T> where T : class
     {
         #region Constructors
-        
+
         public GenericRepository(DatabaseEngine engine, string connectionString, string logPath = null, bool keepConnected = false, params string[] replicaConnStrings)
             : base(engine, connectionString, logPath, keepConnected, replicaConnStrings)
         {
 
         }
-        
+
         #endregion
 
         #region Public Methods
@@ -57,7 +57,7 @@ namespace Rochas.DapperRepository
 
             return result;
         }
-        
+
         public int Create(T entity)
         {
             return Create(entity, false);
@@ -217,6 +217,9 @@ namespace Rochas.DapperRepository
             {
                 sqlInstruction = EntitySqlParser.ParseEntity(entity, PersistenceAction.Create);
 
+                if (persistComposition)
+                    base.StartTransaction();
+
                 lastInsertedId = ExecuteCommand(sqlInstruction);
 
                 if (persistComposition)
@@ -248,6 +251,9 @@ namespace Rochas.DapperRepository
             if (keepConnection || base.Connect(optionalConnConfig))
             {
                 sqlInstruction = EntitySqlParser.ParseEntity(entity, PersistenceAction.Create);
+
+                if (persistComposition)
+                    base.StartTransaction();
 
                 lastInsertedId = await ExecuteCommandAsync(sqlInstruction);
 
@@ -281,6 +287,9 @@ namespace Rochas.DapperRepository
             {
                 sqlInstruction = EntitySqlParser.ParseEntity(entity, PersistenceAction.Edit, filterEntity);
 
+                if (persistComposition)
+                    base.StartTransaction();
+
                 recordsAffected = ExecuteCommand(sqlInstruction);
 
                 if (persistComposition)
@@ -292,7 +301,7 @@ namespace Rochas.DapperRepository
             // Clean cache entity cache data
             var isCacheable = (entity.GetType().GetCustomAttribute(typeof(CacheableAttribute)) != null);
             if (isCacheable)
-                DataCache.Del(entity, true);            
+                DataCache.Del(entity, true);
 
             // Async persistence of database replicas
             if (base.replicationEnabled && !isReplicating)
@@ -312,6 +321,9 @@ namespace Rochas.DapperRepository
             if (keepConnection || base.Connect(optionalConnConfig))
             {
                 sqlInstruction = EntitySqlParser.ParseEntity(entity, PersistenceAction.Edit, filterEntity);
+
+                if (persistComposition)
+                    base.StartTransaction();
 
                 recordsAffected = await ExecuteCommandAsync(sqlInstruction);
 
@@ -694,7 +706,7 @@ namespace Rochas.DapperRepository
 
             Parallelizer.StartNewProcess(replicationParallelDelegate, parallelParam);
         }
-        
+
         private void SetEntityForeignKey(object parentEntity, object childEntity)
         {
             var parentProps = parentEntity.GetType().GetProperties();
@@ -713,15 +725,11 @@ namespace Rochas.DapperRepository
             {
                 List<string> childEntityCommands = ParseComposition(entity, action, filterEntity);
 
-                if (base.connection.State == ConnectionState.Closed)
-                    base.Connect();
-
-                base.StartTransaction();
-
                 foreach (var cmd in childEntityCommands)
                     ExecuteCommand(cmd);
 
-                base.CommitTransaction();
+                if (base.transactionControl != null)
+                    base.CommitTransaction();
 
                 if (!keepConnection) base.Disconnect();
 
