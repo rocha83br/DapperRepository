@@ -43,11 +43,11 @@ namespace Rochas.DapperRepository
             return resultList?.FirstOrDefault();
         }
 
-        public IEnumerable<T> List(T filter, bool loadComposition, int recordsLimit = 0, string orderAttributes = null, bool orderDescending = false)
+        public IEnumerable<T> List(T filter, bool loadComposition = false, int recordsLimit = 0, string orderAttributes = null, bool orderDescending = false)
         {
             return List(filter as object, loadComposition, recordsLimit, orderAttributes: orderAttributes, orderDescending: orderDescending) as IEnumerable<T>;
         }
-        public async Task<IEnumerable<T>> ListAsync(T filter, bool loadComposition, int recordsLimit = 0, string orderAttributes = null, bool orderDescending = false)
+        public async Task<IEnumerable<T>> ListAsync(T filter, bool loadComposition = false, int recordsLimit = 0, string orderAttributes = null, bool orderDescending = false)
         {
             var result = new List<T>();
             var resultList = await ListAsync(filter as object, loadComposition, recordsLimit, orderAttributes: orderAttributes, orderDescending: orderDescending);
