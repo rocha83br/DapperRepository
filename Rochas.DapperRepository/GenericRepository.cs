@@ -541,9 +541,11 @@ namespace Rochas.DapperRepository
 
                 if (childEntityInstance != null)
                 {
-                    if (!childEntityInstance.GetType().Name.Contains("List"))
+                    var childEntityType = childEntityInstance.GetType();
+
+                    if (!childEntityType.Name.Contains("List"))
                     {
-                        var childProps = childEntityInstance.GetType().GetProperties();
+                        var childProps = childEntityType.GetProperties();
                         action = EntitySqlParser.SetPersistenceAction(childEntityInstance, EntitySqlParser.GetKeyColumn(childProps));
                         childEntityFilter = Activator.CreateInstance(childEntityInstance.GetType());
 
@@ -565,9 +567,10 @@ namespace Rochas.DapperRepository
                             {
                                 if (relationAttrib.Cardinality == RelationCardinality.OneToMany)
                                 {
-                                    childEntityFilter = Activator.CreateInstance(listItem.GetType());
+                                    var listItemType = listItem.GetType();
+                                    childEntityFilter = Activator.CreateInstance(listItemType);
 
-                                    var listItemProps = listItem.GetType().GetProperties();
+                                    var listItemProps = listItemType.GetProperties();
                                     action = EntitySqlParser.SetPersistenceAction(listItem, EntitySqlParser.GetKeyColumn(listItemProps));
 
                                     if (action == PersistenceAction.Edit)
