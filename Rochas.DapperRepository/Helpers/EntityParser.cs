@@ -160,8 +160,6 @@ namespace Rochas.DapperRepository.Helpers
                     break;
             }
 
-            GC.Collect(2);
-
             return sqlInstruction;
         }
         
@@ -326,7 +324,6 @@ namespace Rochas.DapperRepository.Helpers
             string columnValueList = string.Empty;
             string columnFilterList = string.Empty;
             string relationList = string.Empty;
-            string relation;
 
             string entityAttributeName = string.Empty;
             string entityColumnName = string.Empty;
@@ -335,8 +332,6 @@ namespace Rochas.DapperRepository.Helpers
             if (entitySqlData != null)
                 foreach (var item in entitySqlData)
                 {
-                    relation = string.Empty;
-
                     if (!item.Key.Equals("TableName"))
                     {
                         entityAttributeName = item.Key.ToString();
@@ -346,59 +341,16 @@ namespace Rochas.DapperRepository.Helpers
                             columnList += string.Format("{0}.{1}, ", tableName, entityColumnName);
                     }
 
+                    var itemKeyPair = (KeyValuePair<object, object>)item;
+
                     if (item.Key.Equals("TableName"))
                     {
                         returnDictionary.Add(item.Key.ToString(), item.Value.ToString());
                         tableName = item.Value.ToString();
                     }
-                    else if (((KeyValuePair<object, object>)item.Value).Key is RelationalColumn)
+                    else if (itemKeyPair.Key is RelationalColumn)
                     {
-                        RelationalColumn relationConfig = ((KeyValuePair<object, object>)item.Value).Key as RelationalColumn;
-
-                        columnList += string.Format("{0}.{1} ", relationConfig.TableName.ToLower(), relationConfig.ColumnName);
-
-                        if (!string.IsNullOrEmpty(relationConfig.ColumnAlias))
-                            columnList += string.Format(SQLStatements.SQL_Action_ColumnAlias, relationConfig.ColumnAlias);
-
-                        columnList += ", ";
-
-                        if (relationConfig.JunctionType == RelationalJunctionType.Mandatory)
-                        {
-                            relation = string.Format(SQLStatements.SQL_Action_RelationateMandatorily,
-                                                                   relationConfig.TableName.ToLower(),
-                                                                   string.Concat(tableName, ".", relationConfig.KeyColumn),
-                                                                   string.Concat(relationConfig.TableName, ".",
-                                                                   relationConfig.ForeignKeyColumn, " "));
-                        }
-                        else
-                        {
-                            if (!string.IsNullOrEmpty(relationConfig.IntermediaryColumnName))
-                            {
-                                relation = string.Format(SQLStatements.SQL_Action_RelationateOptionally,
-                                                         relationConfig.IntermediaryColumnName.ToLower(),
-                                                         string.Concat(tableName, ".", relationConfig.ForeignKeyColumn),
-                                                         string.Concat(relationConfig.IntermediaryColumnName, ".",
-                                                         relationConfig.ForeignKeyColumn));
-
-                                relation += string.Format(SQLStatements.SQL_Action_RelationateOptionally,
-                                                          relationConfig.TableName,
-                                                          string.Concat(relationConfig.IntermediaryColumnName, ".", relationConfig.KeyColumn),
-                                                          string.Concat(relationConfig.TableName, ".", relationConfig.ForeignKeyColumn, " "));
-                            }
-                            else
-                            {
-                                relation = string.Format(SQLStatements.SQL_Action_RelationateOptionally,
-                                                         relationConfig.TableName,
-                                                         string.Concat(tableName, ".", relationConfig.KeyColumn),
-                                                         string.Concat(relationConfig.TableName, ".", relationConfig.ForeignKeyColumn));
-                            }
-                        }
-
-                        if (relation.Contains(relationList)
-                            || string.IsNullOrEmpty(relationList))
-                            relationList = relation;
-                        else if (!relationList.Contains(relation))
-                            relationList += relation;
+                        GetRelationalSqlParameters(item, tableName, columnList, relationList);
                     }
                     else if (((KeyValuePair<object, object>)item.Value).Key is DataAggregationColumn)
                     {
@@ -542,6 +494,58 @@ namespace Rochas.DapperRepository.Helpers
         {
             return (entityKeyColumn.GetValue(entity, null).ToString().Equals(SqlDefaultValue.Zero))
                     ? PersistenceAction.Create : PersistenceAction.Edit;
+        }
+
+        private static void GetRelationalSqlParameters(KeyValuePair<object, object> item, string tableName, string columnList, string relationList)
+        {
+            var relation = string.Empty;
+            var valueKeyPair = (KeyValuePair<object, object>)item.Value;
+            RelationalColumn relationConfig = valueKeyPair.Key as RelationalColumn;
+
+            columnList += string.Format("{0}.{1} ", relationConfig.TableName.ToLower(), relationConfig.ColumnName);
+
+            if (!string.IsNullOrEmpty(relationConfig.ColumnAlias))
+                columnList += string.Format(SQLStatements.SQL_Action_ColumnAlias, relationConfig.ColumnAlias);
+
+            columnList += ", ";
+
+            if (relationConfig.JunctionType == RelationalJunctionType.Mandatory)
+            {
+                relation = string.Format(SQLStatements.SQL_Action_RelationateMandatorily,
+                                                       relationConfig.TableName.ToLower(),
+                                                       string.Concat(tableName, ".", relationConfig.KeyColumn),
+                                                       string.Concat(relationConfig.TableName, ".",
+                                                       relationConfig.ForeignKeyColumn, " "));
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(relationConfig.IntermediaryColumnName))
+                {
+                    relation = string.Format(SQLStatements.SQL_Action_RelationateOptionally,
+                                             relationConfig.IntermediaryColumnName.ToLower(),
+                                             string.Concat(tableName, ".", relationConfig.ForeignKeyColumn),
+                                             string.Concat(relationConfig.IntermediaryColumnName, ".",
+                                             relationConfig.ForeignKeyColumn));
+
+                    relation += string.Format(SQLStatements.SQL_Action_RelationateOptionally,
+                                              relationConfig.TableName,
+                                              string.Concat(relationConfig.IntermediaryColumnName, ".", relationConfig.KeyColumn),
+                                              string.Concat(relationConfig.TableName, ".", relationConfig.ForeignKeyColumn, " "));
+                }
+                else
+                {
+                    relation = string.Format(SQLStatements.SQL_Action_RelationateOptionally,
+                                             relationConfig.TableName,
+                                             string.Concat(tableName, ".", relationConfig.KeyColumn),
+                                             string.Concat(relationConfig.TableName, ".", relationConfig.ForeignKeyColumn));
+                }
+            }
+
+            if (relation.Contains(relationList)
+                || string.IsNullOrEmpty(relationList))
+                relationList = relation;
+            else if (!relationList.Contains(relation))
+                relationList += relation;
         }
 
         private static void GetFilterSqlParameters(IDictionary<object, object> entitySqlFilter, string tableName, PersistenceAction action, IDictionary<string, double[]> rangeValues, string columnFilterList)
