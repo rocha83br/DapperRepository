@@ -112,7 +112,7 @@ namespace Rochas.DapperRepository.Helpers
             {
                 var typeCacheItems = cacheItems.Where(itm => itm.Key.Key.Equals(typeKeyCode)).ToList();
                 var itemProps = cacheItem.GetType().GetProperties();
-                var itemKeyId = EntitySqlParser.GetKeyColumn(itemProps).GetValue(cacheItem, null);
+                var itemKeyId = EntityReflector.GetKeyColumn(itemProps).GetValue(cacheItem, null);
 
                 for (var typeCount = 0; typeCount < typeCacheItems.Count; typeCount++)
                 {
@@ -123,7 +123,7 @@ namespace Rochas.DapperRepository.Helpers
                         if (listValue != null)
                             for (int valueCount = 0; valueCount < ((IList)typeCacheItems[typeCount].Value).Count; valueCount++)
                             {
-                                if (EntitySqlParser.MatchKeys(cacheItem, listValue[valueCount]))
+                                if (EntityReflector.MatchKeys(cacheItem, itemProps, listValue[valueCount]))
                                 {
                                     listValue[valueCount] = cacheItem;
                                 }
