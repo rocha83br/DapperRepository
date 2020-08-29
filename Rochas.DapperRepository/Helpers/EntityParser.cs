@@ -296,7 +296,6 @@ namespace Rochas.DapperRepository.Helpers
             {
                 if ((action == PersistenceAction.List)
                     || (action == PersistenceAction.Get)
-                    || (action == PersistenceAction.Max)
                     || (action == PersistenceAction.Count))
                 {
                     columnList = columnList.Substring(0, columnList.Length - 2);
