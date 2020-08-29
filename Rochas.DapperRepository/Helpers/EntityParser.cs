@@ -15,7 +15,22 @@ namespace Rochas.DapperRepository.Helpers
     {
         #region Public Methods
 
-        public static string ParseEntity(object entity, PersistenceAction persistenceAction, object filterEntity = null, int recordLimit = 0, bool onlyListableAttributes = false, string showAttributes = null, IDictionary<string, double[]> rangeValues = null, string groupAttributes = null, string orderAttributes = null, bool orderDescending = false, bool readUncommited = true)
+        /// <summary>
+        /// Parse entity model object instance to SQL ANSI CRUD statements
+        /// </summary>
+        /// <param name="entity">Entity model class reference</param>
+        /// <param name="persistenceAction">Persistence action enum (Get, List, Create, Edit, Delete)</param>
+        /// <param name="filterEntity">Filter entity model class reference</param>
+        /// <param name="recordLimit">Result records limit</param>
+        /// <param name="onlyListableAttributes">Flag to return only attributes marked as listable</param>
+        /// <param name="showAttributes">Comma separeted list of custom object attributes to show</param>
+        /// <param name="rangeValues"></param>
+        /// <param name="groupAttributes">List of object attributes to group results</param>
+        /// <param name="orderAttributes">List of object attributes to sort results</param>
+        /// <param name="orderDescending">Flag to return ordering with descending order</param>
+        /// <param name="readUncommited">Flag to return uncommited transaction queries statements (NOLOCK)</param>
+        /// <returns></returns>
+        public static string ParseEntity(object entity, PersistenceAction persistenceAction, object filterEntity = null, int recordLimit = 0, bool onlyListableAttributes = false, string showAttributes = null, IDictionary<string, double[]> rangeValues = null, string groupAttributes = null, string sortAttributes = null, bool orderDescending = false, bool readUncommited = true)
         {
             try
             {
@@ -51,8 +66,8 @@ namespace Rochas.DapperRepository.Helpers
                 else
                     sqlInstruction = string.Format(sqlInstruction, string.Empty, "{0}");
 
-                if (!string.IsNullOrEmpty(orderAttributes))
-                    ParseOrdinationAttributes(attributeColumnRelation, orderAttributes, orderDescending, ref sqlInstruction);
+                if (!string.IsNullOrEmpty(sortAttributes))
+                    ParseOrdinationAttributes(attributeColumnRelation, sortAttributes, orderDescending, ref sqlInstruction);
                 else
                     sqlInstruction = string.Format(sqlInstruction, string.Empty);
 

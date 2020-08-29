@@ -43,16 +43,22 @@ namespace Rochas.DapperRepository
             return resultList?.FirstOrDefault();
         }
 
-        public IEnumerable<T> List(T filter, bool loadComposition = false, int recordsLimit = 0, string orderAttributes = null, bool orderDescending = false)
-        {
-            return List(filter as object, loadComposition, recordsLimit, orderAttributes: orderAttributes, orderDescending: orderDescending) as IEnumerable<T>;
-        }
-        public async Task<IEnumerable<T>> ListAsync(T filter, bool loadComposition = false, int recordsLimit = 0, string orderAttributes = null, bool orderDescending = false)
+        public ICollection<T> List(T filter, bool loadComposition = false, int recordsLimit = 0, string sortAttributes = null, bool orderDescending = false)
         {
             var result = new List<T>();
-            var resultList = await ListAsync(filter as object, loadComposition, recordsLimit, orderAttributes: orderAttributes, orderDescending: orderDescending);
-            if (resultList != null)
-                foreach (var item in resultList)
+            var queryResult = ListObjects(filter, loadComposition, recordsLimit, sortAttributes: sortAttributes, orderDescending: orderDescending);
+            if (queryResult != null)
+                foreach (var item in queryResult)
+                    result.Add(item as T);
+
+            return result;
+        }
+        public async Task<ICollection<T>> ListAsync(T filter, bool loadComposition = false, int recordsLimit = 0, string orderAttributes = null, bool orderDescending = false)
+        {
+            var result = new List<T>();
+            var queryResult = await ListAsync(filter as object, loadComposition, recordsLimit, orderAttributes: orderAttributes, orderDescending: orderDescending);
+            if (queryResult != null)
+                foreach (var item in queryResult)
                     result.Add(item as T);
 
             return result;
@@ -144,17 +150,17 @@ namespace Rochas.DapperRepository
 
         #region Helper Methods
 
-        private object Get(object filter, bool loadComposition = false)
+        private object GetObject(object filter, bool loadComposition = false)
         {
-            return List(filter, loadComposition)?.FirstOrDefault();
+            return ListObjects(filter, loadComposition)?.FirstOrDefault();
         }
 
-        private IEnumerable<object> List(object filterEntity, bool loadComposition = false, int recordLimit = 0, bool onlyListableAttributes = false, string showAttributes = null, Dictionary<string, double[]> rangeValues = null, string groupAttributes = null, string orderAttributes = null, bool orderDescending = false)
+        private IEnumerable<object> ListObjects(object filterEntity, bool loadComposition = false, int recordLimit = 0, bool onlyListableAttributes = false, string showAttributes = null, Dictionary<string, double[]> rangeValues = null, string groupAttributes = null, string sortAttributes = null, bool orderDescending = false)
         {
             IEnumerable<object> returnList = null;
 
             // Getting SQL statement from Helper
-            var sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.List, filterEntity, recordLimit, onlyListableAttributes, showAttributes, rangeValues, groupAttributes, orderAttributes, orderDescending);
+            var sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.List, filterEntity, recordLimit, onlyListableAttributes, showAttributes, rangeValues, groupAttributes, sortAttributes, orderDescending);
 
             if (keepConnection || Connect())
             {
@@ -200,13 +206,21 @@ namespace Rochas.DapperRepository
             return returnList;
         }
 
-        //public ICollection<T> Search(object criteria, string sortProperty = "", bool descendingOrder = false)
-        //{
-        //    if (criteria != null)
-        //    {
+        public IEnumerable<object> Search(object criteria, bool loadComposition = false, int recordsLimit = 0, string sortAttributes = "", bool descendingOrder = false)
+        {
+            IEnumerable<object> result = null;
 
-        //    }
-        //}
+            if (criteria != null)
+            {
+                var filterType = typeof(T);
+                var filterProps = filterType.GetProperties();
+                var filter = EntityReflector.GetFilterByMarkedColumns(filterType, filterProps, criteria);
+                if (filter != null)
+                    result = ListObjects(filter, loadComposition, recordsLimit, sortAttributes: sortAttributes, orderDescending: descendingOrder);
+            }
+
+            return result;
+        }
 
         private int Create(object entity, bool persistComposition, string optionalConnConfig = "", bool isReplicating = false)
         {
@@ -468,7 +482,7 @@ namespace Rochas.DapperRepository
 
                                 keyColumnAttribute.SetValue(attributeInstance, foreignKeyColumn.GetValue(loadedEntity, null), null);
 
-                                attributeInstance = Get(attributeInstance);
+                                attributeInstance = GetObject(attributeInstance);
                             }
 
                             break;
@@ -479,7 +493,7 @@ namespace Rochas.DapperRepository
                             foreignKeyColumn = attributeInstance.GetType().GetProperty(relationConfig.ForeignKeyAttribute);
                             foreignKeyColumn.SetValue(attributeInstance, int.Parse(keyColumn.GetValue(loadedEntity, null).ToString()), null);
 
-                            attributeInstance = List(attributeInstance as object);
+                            attributeInstance = ListObjects(attributeInstance as object);
 
                             break;
                         case RelationCardinality.ManyToMany:
@@ -490,7 +504,7 @@ namespace Rochas.DapperRepository
                             {
                                 SetEntityForeignKey(loadedEntity, attributeInstance);
 
-                                var manyToRelations = List(attributeInstance, true);
+                                var manyToRelations = ListObjects(attributeInstance, true);
 
                                 Type childManyType = prop.PropertyType.GetGenericArguments()[0];
                                 Type dynamicManyType = typeof(List<>).MakeGenericType(new Type[] { childManyType });
@@ -504,7 +518,7 @@ namespace Rochas.DapperRepository
                                     var childFilterProps = childFilter.GetType().GetProperties();
                                     EntityReflector.GetKeyColumn(childFilterProps).SetValue(childFilter, childManyKeyValue, null);
 
-                                    var childInstance = Get(childFilter);
+                                    var childInstance = GetObject(childFilter);
 
                                     childManyEntities.Add(childInstance);
                                 }
@@ -592,7 +606,7 @@ namespace Rochas.DapperRepository
 
                                     SetEntityForeignKey(entityParent, manyToEntity);
 
-                                    var existRelation = this.Get(manyToEntity);
+                                    var existRelation = this.GetObject(manyToEntity);
 
                                     if (existRelation != null) manyToEntity = existRelation;
 

@@ -151,9 +151,18 @@ namespace Rochas.DapperRepository.Helpers
             return entityProps?.FirstOrDefault(prp => prp.GetCustomAttributes().Any(atb => atb is KeyAttribute));
         }
 
-        public static PropertyInfo[] GetFilterableColumns(PropertyInfo[] entityProps)
+        public static object GetFilterByMarkedColumns(Type entityType, PropertyInfo[] entityProps, object criteria)
         {
-            return entityProps?.Where(prp => prp.GetCustomAttribute(typeof(FilterableAttribute)) != null).ToArray();
+            var entity = Activator.CreateInstance(entityType);
+            if (entity != null)
+            {
+                var filterableProps = entityProps?.Where(prp => prp.GetCustomAttribute(typeof(FilterableAttribute)) != null);
+                if (filterableProps != null)
+                    foreach (var prop in filterableProps)
+                        prop.SetValue(entity, criteria);
+            }
+
+            return entity;
         }
 
         public static PropertyInfo GetForeignKeyColumn(PropertyInfo[] entityProps)

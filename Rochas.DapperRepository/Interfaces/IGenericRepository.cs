@@ -17,7 +17,7 @@ namespace Rochas.DapperRepository.Interfaces
         Task<int> EditAsync(T entity, T filterEntity);
         T Get(T filter, bool loadComposition = false);
         Task<T> GetAsync(T filter, bool loadComposition = false);
-        IEnumerable<T> List(T filter, bool loadComposition, int recordsLimit = 0, string orderAttributes = null, bool orderDescending = false);
-        Task<IEnumerable<T>> ListAsync(T filter, bool loadComposition, int recordsLimit = 0, string orderAttributes = null, bool orderDescending = false);
+        ICollection<T> List(T filter, bool loadComposition, int recordsLimit = 0, string sortAttributes = null, bool orderDescending = false);
+        Task<ICollection<T>> ListAsync(T filter, bool loadComposition, int recordsLimit = 0, string sortAttributes = null, bool orderDescending = false);
     }
 }
