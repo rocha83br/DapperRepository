@@ -316,7 +316,6 @@ namespace Rochas.DapperRepository.Helpers
         private static Dictionary<string, string> GetSqlParameters(Dictionary<object, object> entitySqlData, PersistenceAction action, IDictionary<object, object> entitySqlFilter, string[] showAttributes, string keyColumnName, IDictionary<string, double[]> rangeValues, string groupAttributes, bool readUncommited = true)
         {
             var returnDictionary = new Dictionary<string, string>();
-            var relationshipDictionary = new Dictionary<string, string>();
 
             string tableName = string.Empty;
             string columnList = string.Empty;
@@ -325,15 +324,19 @@ namespace Rochas.DapperRepository.Helpers
             string columnFilterList = string.Empty;
             string relationList = string.Empty;
 
-            string entityAttributeName = string.Empty;
             string entityColumnName = string.Empty;
-            bool isCustomColumn;
+            string entityAttributeName = string.Empty;
 
             if (entitySqlData != null)
                 foreach (var item in entitySqlData)
                 {
+                    KeyValuePair<object, object> itemChildKeyPair;
+
+                    // Grouping predicate
                     if (!item.Key.Equals("TableName"))
                     {
+                        itemChildKeyPair = (KeyValuePair<object, object>)item.Value;
+
                         entityAttributeName = item.Key.ToString();
                         entityColumnName = ((KeyValuePair<object, object>)item.Value).Key.ToString();
 
@@ -341,88 +344,64 @@ namespace Rochas.DapperRepository.Helpers
                             columnList += string.Format("{0}.{1}, ", tableName, entityColumnName);
                     }
 
-                    var itemKeyPair = (KeyValuePair<object, object>)item;
-
                     if (item.Key.Equals("TableName"))
                     {
                         returnDictionary.Add(item.Key.ToString(), item.Value.ToString());
                         tableName = item.Value.ToString();
                     }
-                    else if (itemKeyPair.Key is RelationalColumn)
+                    else if (itemChildKeyPair.Key is RelationalColumn)
                     {
-                        GetRelationalSqlParameters(item, tableName, columnList, relationList);
+                        GetRelationalSqlParameters(itemChildKeyPair, tableName, ref columnList, ref relationList);
                     }
-                    else if (((KeyValuePair<object, object>)item.Value).Key is DataAggregationColumn)
+                    else if (itemChildKeyPair.Key is DataAggregationColumn)
                     {
-                        var annotation = ((KeyValuePair<object, object>)item.Value).Key as DataAggregationColumn;
-
-                        if ((action == PersistenceAction.Max) && (annotation.AggregationType == DataAggregationType.Maximum))
-                            columnList += string.Format(SQLStatements.SQL_Action_MaximumAggregation,
-                                                        tableName, annotation.ColumnName, entityAttributeName);
-                        else if ((action == PersistenceAction.Count) && (annotation.AggregationType == DataAggregationType.Count))
-                            columnList += string.Format(SQLStatements.SQL_Action_CountAggregation,
-                                                        tableName, annotation.ColumnName, entityAttributeName);
+                        GetAggregationSqlParameters(itemChildKeyPair, tableName, entityAttributeName, ref columnList);
                     }
                     else
                     {
-                        object entityColumnValue = ((KeyValuePair<object, object>)item.Value).Value;
-                        isCustomColumn = !entityAttributeName.Equals(entityColumnName);
-
-                        if ((showAttributes != null) && (showAttributes.Length > 0))
-                            for (int counter = 0; counter < showAttributes.Length; counter++)
-                                showAttributes[counter] = showAttributes[counter].Trim();
-
-                        switch (action)
-                        {
-                            case PersistenceAction.Create:
-                                columnList += string.Format("{0}, ", entityColumnName);
-                                valueList += string.Format("{0}, ", entityColumnValue);
-
-                                break;
-                            case PersistenceAction.List:
-                                
-                                if (((showAttributes == null) || (showAttributes.Length == 0))
-                                    || showAttributes.Length > 0 && Array.IndexOf(showAttributes, entityAttributeName) > -1)
-                                {
-                                    var columnAlias = isCustomColumn ? string.Format(" AS {0}", entityAttributeName) : string.Empty;
-                                    columnList += string.Format("{0}.{1}{2}, ", tableName, entityColumnName, columnAlias);
-                                }
-
-                                break;
-                            case PersistenceAction.Get:
-                                
-                                if (((showAttributes == null) || showAttributes.Length == 0)
-                                    || showAttributes.Length > 0 && Array.IndexOf(showAttributes, entityAttributeName) > -1)
-                                {
-                                    var columnAlias = isCustomColumn ? string.Format(" AS {0}", entityAttributeName) : string.Empty;
-                                    columnList += string.Format("{0}.{1}{2}, ", tableName, entityColumnName, columnAlias);
-                                }
-
-                                break;
-                            case PersistenceAction.Count:
-
-                                if (entityColumnName.Equals(keyColumnName))
-                                    columnList += string.Format(SQLStatements.SQL_Action_CountAggregation, 
-                                                                tableName, entityColumnName, entityAttributeName);
-
-                                break;
-                            default: // Alteração e Exclusão
-                                if (!entityAttributeName.ToLower().Equals("id"))
-                                {
-                                    if (entityColumnValue == null)
-                                        entityColumnValue = SqlDefaultValue.Null;
-
-                                    columnValueList += string.Format("{0} = {1}, ", entityColumnName, entityColumnValue);
-                                }
-
-                                break;
-                        }
+                        GetPredicateSqlParameters(itemChildKeyPair, action, tableName, keyColumnName, entityColumnName,
+                                                  entityAttributeName, showAttributes, ref columnList, ref valueList, ref columnValueList);
                     }
                 }
 
             if (entitySqlFilter != null)
-                GetFilterSqlParameters(entitySqlFilter, tableName, action, rangeValues, columnFilterList);
+                GetFilterSqlParameters(entitySqlFilter, tableName, action, rangeValues, ref columnFilterList);
 
+            FillSqlParametersResult(returnDictionary, action, readUncommited, ref columnList, ref valueList, ref columnValueList, ref columnFilterList, ref relationList);
+
+            return returnDictionary;
+        }
+
+        public static object ParseManyToRelation(object childEntity, RelatedEntity relation)
+        {
+            object result = null;
+            var relEntity = relation.IntermediaryEntity;
+
+            if (relEntity != null)
+            {
+                var interEntity = Activator.CreateInstance(relation.IntermediaryEntity);
+
+                var childProps = childEntity.GetType().GetProperties();
+                var childKey = GetKeyColumn(childProps);
+                var interKeyAttrib = interEntity.GetType().GetProperties()
+                                                .FirstOrDefault(atb => atb.Name.Equals(relation.IntermediaryKeyAttribute));
+
+                interKeyAttrib.SetValue(interEntity, childKey.GetValue(childEntity, null), null);
+
+                result = interEntity;
+            }
+
+            return result;
+        }
+
+        public static PersistenceAction SetPersistenceAction(object entity, PropertyInfo entityKeyColumn)
+        {
+            return (entityKeyColumn.GetValue(entity, null).ToString().Equals(SqlDefaultValue.Zero))
+                    ? PersistenceAction.Create : PersistenceAction.Edit;
+        }
+
+        private static void FillSqlParametersResult(IDictionary<string, string> returnDictionary, PersistenceAction action, bool readUncommited, ref string columnList, ref string valueList, ref string columnValueList, ref string columnFilterList, ref string relationList)
+        {
             if (action == PersistenceAction.Create)
             {
                 columnList = columnList.Substring(0, columnList.Length - 2);
@@ -464,43 +443,149 @@ namespace Rochas.DapperRepository.Helpers
                 else
                     returnDictionary.Add("ColumnFilterList", "1 = 1");
             }
-
-            return returnDictionary;
         }
 
-        public static object ParseManyToRelation(object childEntity, RelatedEntity relation)
+        private static void GetPredicateSqlParameters(KeyValuePair<object, object> itemChildKeyPair, PersistenceAction action, string tableName, string keyColumnName, string entityColumnName, string entityAttributeName, string[] showAttributes, ref string columnList, ref string valueList, ref string columnValueList)
         {
-            object result = null;
-            var relEntity = relation.IntermediaryEntity;
+            object entityColumnValue = itemChildKeyPair.Value;
+            var isCustomColumn = !entityAttributeName.Equals(entityColumnName);
 
-            if (relEntity != null)
+            if ((showAttributes != null) && (showAttributes.Length > 0))
+                for (int counter = 0; counter < showAttributes.Length; counter++)
+                    showAttributes[counter] = showAttributes[counter].Trim();
+
+            switch (action)
             {
-                var interEntity = Activator.CreateInstance(relation.IntermediaryEntity);
+                case PersistenceAction.Create:
+                    columnList += string.Format("{0}, ", entityColumnName);
+                    valueList += string.Format("{0}, ", entityColumnValue);
 
-                var childProps = childEntity.GetType().GetProperties();
-                var childKey = GetKeyColumn(childProps);
-                var interKeyAttrib = interEntity.GetType().GetProperties()
-                                                .FirstOrDefault(atb => atb.Name.Equals(relation.IntermediaryKeyAttribute));
+                    break;
+                case PersistenceAction.List:
 
-                interKeyAttrib.SetValue(interEntity, childKey.GetValue(childEntity, null), null);
+                    if (((showAttributes == null) || (showAttributes.Length == 0))
+                        || showAttributes.Length > 0 && Array.IndexOf(showAttributes, entityAttributeName) > -1)
+                    {
+                        var columnAlias = isCustomColumn ? string.Format(" AS {0}", entityAttributeName) : string.Empty;
+                        columnList += string.Format("{0}.{1}{2}, ", tableName, entityColumnName, columnAlias);
+                    }
 
-                result = interEntity;
+                    break;
+                case PersistenceAction.Get:
+
+                    if (((showAttributes == null) || showAttributes.Length == 0)
+                        || showAttributes.Length > 0 && Array.IndexOf(showAttributes, entityAttributeName) > -1)
+                    {
+                        var columnAlias = isCustomColumn ? string.Format(" AS {0}", entityAttributeName) : string.Empty;
+                        columnList += string.Format("{0}.{1}{2}, ", tableName, entityColumnName, columnAlias);
+                    }
+
+                    break;
+                case PersistenceAction.Count:
+
+                    if (entityColumnName.Equals(keyColumnName))
+                        columnList += string.Format(SQLStatements.SQL_Action_CountAggregation,
+                                                    tableName, entityColumnName, entityAttributeName);
+
+                    break;
+                default: // Alteração e Exclusão
+                    if (!entityAttributeName.ToLower().Equals("id"))
+                    {
+                        if (entityColumnValue == null)
+                            entityColumnValue = SqlDefaultValue.Null;
+
+                        columnValueList += string.Format("{0} = {1}, ", entityColumnName, entityColumnValue);
+                    }
+
+                    break;
             }
-
-            return result;
         }
 
-        public static PersistenceAction SetPersistenceAction(object entity, PropertyInfo entityKeyColumn)
+        private static void GetFilterSqlParameters(IDictionary<object, object> entitySqlFilter, string tableName, PersistenceAction action, IDictionary<string, double[]> rangeValues, ref string columnFilterList)
         {
-            return (entityKeyColumn.GetValue(entity, null).ToString().Equals(SqlDefaultValue.Zero))
-                    ? PersistenceAction.Create : PersistenceAction.Edit;
+            foreach (var filter in entitySqlFilter)
+            {
+                if (!filter.Key.Equals("TableName") && !filter.Key.Equals("RelatedEntity"))
+                {
+                    object filterColumnName = null;
+                    object filterColumnValue = null;
+                    object columnName = null;
+                    string columnNameStr = string.Empty;
+
+                    var itemChildKeyPair = (KeyValuePair<object, object>)filter.Value;
+                    if (!(itemChildKeyPair.Key is RelationalColumn))
+                    {
+                        columnName = itemChildKeyPair.Key;
+                        filterColumnName = string.Concat(tableName, ".", columnName);
+                        filterColumnValue = itemChildKeyPair.Value;
+                    }
+                    else
+                    {
+                        RelationalColumn relationConfig = itemChildKeyPair.Key as RelationalColumn;
+
+                        if ((action == PersistenceAction.List) && relationConfig.Filterable)
+                        {
+                            filterColumnName = string.Concat(relationConfig.TableName.ToLower(), ".", relationConfig.ColumnName);
+                            filterColumnValue = itemChildKeyPair.Value;
+                        }
+                    }
+
+                    var rangeFilter = false;
+                    if (rangeValues != null)
+                    {
+                        columnNameStr = columnName.ToString();
+                        rangeFilter = rangeValues.ContainsKey(columnNameStr);
+                    }
+
+                    if (((filterColumnValue != null)
+                            && (filterColumnValue.ToString() != SqlDefaultValue.Null)
+                            && (filterColumnValue.ToString() != SqlDefaultValue.Zero))
+                        || rangeFilter)
+                    {
+                        long fake;
+                        bool compareRule = (action == PersistenceAction.List)
+                                         && !long.TryParse(filterColumnValue.ToString(), out fake)
+                                         && !filterColumnName.ToString().ToLower().Contains("date")
+                                         && !filterColumnName.ToString().ToLower().StartsWith("id")
+                                         && !filterColumnName.ToString().ToLower().EndsWith("id")
+                                         && !filterColumnName.ToString().ToLower().Contains(".id");
+
+                        string comparation = string.Empty;
+
+                        if (!rangeFilter)
+                        {
+                            comparation = (compareRule)
+                                          ? string.Format(SqlOperator.Contains, filterColumnValue.ToString().Replace("'", string.Empty))
+                                          : string.Concat(SqlOperator.Equal, filterColumnValue);
+
+                            if (filterColumnValue.Equals(true))
+                                comparation = " = 1";
+
+                            if ((action == PersistenceAction.Edit) && filterColumnValue.Equals(false))
+                                comparation = " = 0";
+
+                            if (!filterColumnValue.Equals(false))
+                                columnFilterList += filterColumnName + comparation +
+                                    ((compareRule) ? SqlOperator.Or : SqlOperator.And);
+                        }
+                        else
+                        {
+                            double rangeFrom = rangeValues[columnNameStr][0];
+                            double rangeTo = rangeValues[columnNameStr][1];
+
+                            comparation = string.Format(SqlOperator.Between, rangeFrom, rangeTo);
+
+                            columnFilterList += string.Concat(filterColumnName, " ", comparation, SqlOperator.And);
+                        }
+                    }
+                }
+            }
         }
 
-        private static void GetRelationalSqlParameters(KeyValuePair<object, object> item, string tableName, string columnList, string relationList)
+        private static void GetRelationalSqlParameters(KeyValuePair<object, object> itemChildKeyPair, string tableName, ref string columnList, ref string relationList)
         {
-            var relation = string.Empty;
-            var valueKeyPair = (KeyValuePair<object, object>)item.Value;
-            RelationalColumn relationConfig = valueKeyPair.Key as RelationalColumn;
+            string relation;
+            RelationalColumn relationConfig = itemChildKeyPair.Key as RelationalColumn;
 
             columnList += string.Format("{0}.{1} ", relationConfig.TableName.ToLower(), relationConfig.ColumnName);
 
@@ -548,84 +633,32 @@ namespace Rochas.DapperRepository.Helpers
                 relationList += relation;
         }
 
-        private static void GetFilterSqlParameters(IDictionary<object, object> entitySqlFilter, string tableName, PersistenceAction action, IDictionary<string, double[]> rangeValues, string columnFilterList)
+        private static void GetAggregationSqlParameters(KeyValuePair<object, object> itemChildKeyPair, string tableName, string entityAttributeName, ref string columnList)
         {
-            foreach (var filter in entitySqlFilter)
+            var annotation = itemChildKeyPair.Key as DataAggregationColumn;
+
+            switch (annotation.AggregationType)
             {
-                if (!filter.Key.Equals("TableName") && !filter.Key.Equals("RelatedEntity"))
-                {
-                    object filterColumnName = null;
-                    object filterColumnValue = null;
-                    object columnName = null;
-                    string columnNameStr = string.Empty;
-
-                    if (!(((KeyValuePair<object, object>)filter.Value).Key is RelationalColumn))
-                    {
-                        columnName = ((KeyValuePair<object, object>)filter.Value).Key;
-                        filterColumnName = string.Concat(tableName, ".", columnName);
-                        filterColumnValue = ((KeyValuePair<object, object>)filter.Value).Value;
-                    }
-                    else
-                    {
-                        RelationalColumn relationConfig = ((KeyValuePair<object, object>)filter.Value).Key as RelationalColumn;
-
-                        if ((action == PersistenceAction.List) && relationConfig.Filterable)
-                        {
-                            filterColumnName = string.Concat(relationConfig.TableName.ToLower(), ".", relationConfig.ColumnName);
-                            filterColumnValue = ((KeyValuePair<object, object>)filter.Value).Value;
-                        }
-                    }
-
-                    var rangeFilter = false;
-                    if (rangeValues != null)
-                    {
-                        columnNameStr = columnName.ToString();
-                        rangeFilter = rangeValues.ContainsKey(columnNameStr);
-                    }
-
-                    if (((filterColumnValue != null)
-                            && (filterColumnValue.ToString() != SqlDefaultValue.Null)
-                            && (filterColumnValue.ToString() != SqlDefaultValue.Zero))
-                        || rangeFilter)
-                    {
-                        long fake;
-                        bool compareRule = (action == PersistenceAction.List)
-                                         && !long.TryParse(filterColumnValue.ToString(), out fake)
-                                         && !filterColumnName.ToString().ToLower().Contains("date")
-                                         && !filterColumnName.ToString().ToLower().Contains("hash")
-                                         && !filterColumnName.ToString().ToLower().StartsWith("id")
-                                         && !filterColumnName.ToString().ToLower().EndsWith("id")
-                                         && !filterColumnName.ToString().ToLower().Contains(".id");
-
-                        string comparation = string.Empty;
-
-                        if (!rangeFilter)
-                        {
-                            comparation = (compareRule)
-                                          ? string.Format(SqlOperator.Contains, filterColumnValue.ToString().Replace("'", string.Empty))
-                                          : string.Concat(SqlOperator.Equal, filterColumnValue);
-
-                            if (filterColumnValue.Equals(true))
-                                comparation = " = 1";
-
-                            if ((action == PersistenceAction.Edit) && filterColumnValue.Equals(false))
-                                comparation = " = 0";
-
-                            if (!filterColumnValue.Equals(false))
-                                columnFilterList += filterColumnName + comparation +
-                                    ((compareRule) ? SqlOperator.Or : SqlOperator.And);
-                        }
-                        else
-                        {
-                            double rangeFrom = rangeValues[columnNameStr][0];
-                            double rangeTo = rangeValues[columnNameStr][1];
-
-                            comparation = string.Format(SqlOperator.Between, rangeFrom, rangeTo);
-
-                            columnFilterList += string.Concat(filterColumnName, " ", comparation, SqlOperator.And);
-                        }
-                    }
-                }
+                case DataAggregationType.Count:
+                    columnList += string.Format(SQLStatements.SQL_Action_CountAggregation,
+                                                tableName, annotation.ColumnName, entityAttributeName);
+                    break;
+                case DataAggregationType.Sum:
+                    columnList += string.Format(SQLStatements.SQL_Action_SummaryAggregation,
+                                                tableName, annotation.ColumnName, entityAttributeName);
+                    break;
+                case DataAggregationType.Average:
+                    columnList += string.Format(SQLStatements.SQL_Action_AverageAggregation,
+                                                tableName, annotation.ColumnName, entityAttributeName);
+                    break;
+                case DataAggregationType.Minimum:
+                    columnList += string.Format(SQLStatements.SQL_Action_MinimumAggregation,
+                                                tableName, annotation.ColumnName, entityAttributeName);
+                    break;
+                case DataAggregationType.Maximum:
+                    columnList += string.Format(SQLStatements.SQL_Action_MaximumAggregation,
+                                                tableName, annotation.ColumnName, entityAttributeName);
+                    break;
             }
         }
 

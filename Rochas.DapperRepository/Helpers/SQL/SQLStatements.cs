@@ -4,6 +4,7 @@ namespace Rochas.DapperRepository.Helpers.SQL
 {
     public static class SQLStatements
     {
+        public static string SQL_Action_AverageAggregation = "AVG({0}.{1}) AS {2}, ";
         public static string SQL_Action_ColumnAlias = "AS {0} ";
         public static string SQL_Action_CountAggregation = "COUNT({0}.{1}) AS {2}, ";
         public static string SQL_Action_Create = "INSERT INTO {0} ({1}) VALUES ({2}) ";
