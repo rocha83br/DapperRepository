@@ -32,6 +32,21 @@ namespace Rochas.DapperRepository.Test
         }
 
         [Fact]
+        public void SearchTest()
+        {
+            var filterType = typeof(SampleEntity);
+            var filterProps = filterType.GetProperties();
+            var testFilter = EntityReflector.GetFilterByMarkedColumns(typeof(SampleEntity), filterProps, "roberto");
+
+            var result = EntitySqlParser.ParseEntity(testFilter, PersistenceAction.List, testFilter);
+
+            Assert.NotNull(result);
+            Assert.StartsWith("SELECT", result);
+            Assert.Contains("FROM", result);
+            Assert.EndsWith(string.Format("WHERE {0}.{1} LIKE '%roberto%'", "dbo.SampleEntity", "Name"), result.Trim());
+        }
+
+        [Fact]
         public void CreateTest()
         {
             var sampleEntity = new SampleEntity() { DocNumber = 12345 };

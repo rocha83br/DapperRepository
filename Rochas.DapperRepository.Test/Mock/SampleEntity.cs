@@ -14,6 +14,7 @@ namespace Rochas.DapperRepository.Test
 
         public DateTime CreationDate { get; set; }
         
+        [Filterable]
         public string Name { get; set; }
         
         [Column("Person_Age")]
