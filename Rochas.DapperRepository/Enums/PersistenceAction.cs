@@ -9,10 +9,9 @@ namespace Rochas.DapperRepository.Enums
         Get = 1,
         List = 2,
         Count = 3,
-        Max = 4,
-        Create = 5,
-        Edit = 6,
-        Delete = 7
+        Create = 4,
+        Edit = 5,
+        Delete = 6
 
         #endregion
     }
