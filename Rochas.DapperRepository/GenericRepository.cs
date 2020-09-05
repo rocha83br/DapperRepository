@@ -20,6 +20,13 @@ namespace Rochas.DapperRepository
 {
     public class GenericRepository<T> : DataBaseConnection, IDisposable, IGenericRepository<T> where T : class
     {
+        #region Declarations
+        
+        static Type entityType = typeof(T);
+        static PropertyInfo[] entityProps = entityType.GetProperties();
+
+        #endregion
+
         #region Constructors
 
         public GenericRepository(DatabaseEngine engine, string connectionString, string logPath = null, bool keepConnected = false, params string[] replicaConnStrings)
@@ -32,15 +39,51 @@ namespace Rochas.DapperRepository
 
         #region Public Methods
 
+        public T Get(object key, bool loadComposition = false)
+        {
+            var filter = EntityReflector.GetFilterByPrimaryKey(entityType, entityProps, key) as T;
+
+            return Get(filter, loadComposition);
+        }
+
+        public async Task<T> GetAsync(object key, bool loadComposition = false)
+        {
+            var filter = EntityReflector.GetFilterByPrimaryKey(entityType, entityProps, key) as T;
+
+            return await GetAsync(filter, loadComposition);
+        }
+
         public T Get(T filter, bool loadComposition = false)
         {
-            return List(filter, loadComposition)?.FirstOrDefault() as T;
+            return List(filter, loadComposition)?.FirstOrDefault();
         }
 
         public async Task<T> GetAsync(T filter, bool loadComposition = false)
         {
             var resultList = await ListAsync(filter, loadComposition);
             return resultList?.FirstOrDefault();
+        }
+        public ICollection<T> Search(object criteria, bool loadComposition = false, int recordsLimit = 0, string sortAttributes = null, bool orderDescending = false)
+        {
+            var result = new List<T>();
+            var filter = EntityReflector.GetFilterByFilterableColumns(entityType, entityProps, criteria);
+            var queryResult = ListObjects(filter, loadComposition, recordsLimit, sortAttributes: sortAttributes, orderDescending: orderDescending);
+            if (queryResult != null)
+                foreach (var item in queryResult)
+                    result.Add(item as T);
+
+            return result;
+        }
+        public async Task<ICollection<T>> SearchAsync(object criteria, bool loadComposition = false, int recordsLimit = 0, string orderAttributes = null, bool orderDescending = false)
+        {
+            var result = new List<T>();
+            var filter = EntityReflector.GetFilterByFilterableColumns(entityType, entityProps, criteria);
+            var queryResult = await ListObjectsAsync(filter, loadComposition, recordsLimit, orderAttributes: orderAttributes, orderDescending: orderDescending);
+            if (queryResult != null)
+                foreach (var item in queryResult)
+                    result.Add(item as T);
+
+            return result;
         }
 
         public ICollection<T> List(T filter, bool loadComposition = false, int recordsLimit = 0, string sortAttributes = null, bool orderDescending = false)
@@ -56,7 +99,7 @@ namespace Rochas.DapperRepository
         public async Task<ICollection<T>> ListAsync(T filter, bool loadComposition = false, int recordsLimit = 0, string orderAttributes = null, bool orderDescending = false)
         {
             var result = new List<T>();
-            var queryResult = await ListAsync(filter as object, loadComposition, recordsLimit, orderAttributes: orderAttributes, orderDescending: orderDescending);
+            var queryResult = await ListObjectsAsync(filter, loadComposition, recordsLimit, orderAttributes: orderAttributes, orderDescending: orderDescending);
             if (queryResult != null)
                 foreach (var item in queryResult)
                     result.Add(item as T);
@@ -181,7 +224,7 @@ namespace Rochas.DapperRepository
             return returnList;
         }
 
-        private async Task<IEnumerable<object>> ListAsync(object filterEntity, bool loadComposition = false, int recordLimit = 0, bool onlyListableAttributes = false, string showAttributes = null, Dictionary<string, double[]> rangeValues = null, string groupAttributes = null, string orderAttributes = null, bool orderDescending = false, bool readUncommited = true)
+        private async Task<IEnumerable<object>> ListObjectsAsync(object filterEntity, bool loadComposition = false, int recordLimit = 0, bool onlyListableAttributes = false, string showAttributes = null, Dictionary<string, double[]> rangeValues = null, string groupAttributes = null, string orderAttributes = null, bool orderDescending = false, bool readUncommited = true)
         {
             IEnumerable<object> returnList = null;
 
@@ -205,23 +248,7 @@ namespace Rochas.DapperRepository
 
             return returnList;
         }
-
-        public IEnumerable<object> Search(object criteria, bool loadComposition = false, int recordsLimit = 0, string sortAttributes = "", bool descendingOrder = false)
-        {
-            IEnumerable<object> result = null;
-
-            if (criteria != null)
-            {
-                var filterType = typeof(T);
-                var filterProps = filterType.GetProperties();
-                var filter = EntityReflector.GetFilterByMarkedColumns(filterType, filterProps, criteria);
-                if (filter != null)
-                    result = ListObjects(filter, loadComposition, recordsLimit, sortAttributes: sortAttributes, orderDescending: descendingOrder);
-            }
-
-            return result;
-        }
-
+        
         private int Create(object entity, bool persistComposition, string optionalConnConfig = "", bool isReplicating = false)
         {
             string sqlInstruction;

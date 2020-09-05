@@ -9,8 +9,22 @@ namespace Rochas.DapperRepository.Test
     public class EntitySqlParserTest
     {
         [Fact]
-        public void GetTest()
-        {;
+        public void GetByPrimaryKeyTest()
+        {
+            var entityType = typeof(SampleEntity);
+            var entityProps = entityType.GetProperties();
+            var testFilter = EntityReflector.GetFilterByPrimaryKey(entityType, entityProps, 12345);
+            
+            var result = EntitySqlParser.ParseEntity(testFilter, PersistenceAction.Get, testFilter);
+
+            Assert.NotNull(result);
+            Assert.StartsWith("SELECT", result);
+            Assert.EndsWith(string.Format("WHERE {0}.{1} = 12345", "dbo.SampleEntity", "DocNumber"), result.Trim());
+        }
+
+        [Fact]
+        public void GetByFilterTest()
+        {
             var testFilter = new SampleEntity() { DocNumber = 12345 };
             var result = EntitySqlParser.ParseEntity(testFilter, PersistenceAction.Get, testFilter);
 
@@ -36,7 +50,7 @@ namespace Rochas.DapperRepository.Test
         {
             var filterType = typeof(SampleEntity);
             var filterProps = filterType.GetProperties();
-            var testFilter = EntityReflector.GetFilterByMarkedColumns(typeof(SampleEntity), filterProps, "roberto");
+            var testFilter = EntityReflector.GetFilterByFilterableColumns(typeof(SampleEntity), filterProps, "roberto");
 
             var result = EntitySqlParser.ParseEntity(testFilter, PersistenceAction.List, testFilter);
 

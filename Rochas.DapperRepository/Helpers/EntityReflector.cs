@@ -17,7 +17,7 @@ namespace Rochas.DapperRepository.Helpers
         public static Dictionary<object, object> GetPropertiesValueList(object entity, Type entityType, PropertyInfo[] entityProperties, PersistenceAction action)
         {
             var objectSQLDataRelation = new Dictionary<object, object>();
-            
+
             var tableAnnotation = GetTableAttribute(entityType);
             if (tableAnnotation != null)
             {
@@ -151,7 +151,19 @@ namespace Rochas.DapperRepository.Helpers
             return entityProps?.FirstOrDefault(prp => prp.GetCustomAttributes().Any(atb => atb is KeyAttribute));
         }
 
-        public static object GetFilterByMarkedColumns(Type entityType, PropertyInfo[] entityProps, object criteria)
+        public static object GetFilterByPrimaryKey(Type entityType, PropertyInfo[] entityProps, object key)
+        {
+            var entity = Activator.CreateInstance(entityType);
+            if (entity != null)
+            {
+                var keyColumn = GetKeyColumn(entityProps);
+                keyColumn?.SetValue(entity, key);
+            }
+
+            return entity;
+        }
+
+        public static object GetFilterByFilterableColumns(Type entityType, PropertyInfo[] entityProps, object criteria)
         {
             var entity = Activator.CreateInstance(entityType);
             if (entity != null)
