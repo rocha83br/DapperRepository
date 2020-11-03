@@ -19,7 +19,7 @@ namespace Rochas.DapperRepository.Test
 
             Assert.NotNull(result);
             Assert.StartsWith("SELECT", result);
-            Assert.EndsWith(string.Format("WHERE {0}.{1} = 12345", "dbo.SampleEntity", "DocNumber"), result.Trim());
+            Assert.EndsWith(string.Format("WHERE {0}.{1} = 12345", "sample_entity", "doc_number"), result.Trim());
         }
 
         [Fact]
@@ -30,7 +30,7 @@ namespace Rochas.DapperRepository.Test
 
             Assert.NotNull(result);
             Assert.StartsWith("SELECT", result);
-            Assert.EndsWith(string.Format("WHERE {0}.{1} = 12345", "dbo.SampleEntity", "DocNumber"), result.Trim());
+            Assert.EndsWith(string.Format("WHERE {0}.{1} = 12345", "sample_entity", "doc_number"), result.Trim());
         }
 
         [Fact]
@@ -42,7 +42,7 @@ namespace Rochas.DapperRepository.Test
             Assert.NotNull(result);
             Assert.StartsWith("SELECT", result);
             Assert.Contains("FROM", result);
-            Assert.EndsWith(string.Format("WHERE {0}.{1} LIKE '%roberto%'", "dbo.SampleEntity", "Name"), result.Trim());
+            Assert.EndsWith(string.Format("WHERE {0}.{1} LIKE '%roberto%'", "sample_entity", "name"), result.Trim());
         }
 
         [Fact]
@@ -57,7 +57,7 @@ namespace Rochas.DapperRepository.Test
             Assert.NotNull(result);
             Assert.StartsWith("SELECT", result);
             Assert.Contains("FROM", result);
-            Assert.EndsWith(string.Format("WHERE {0}.{1} LIKE '%roberto%'", "dbo.SampleEntity", "Name"), result.Trim());
+            Assert.EndsWith(string.Format("WHERE {0}.{1} LIKE '%roberto%'", "sample_entity", "name"), result.Trim());
         }
 
         [Fact]
@@ -69,9 +69,9 @@ namespace Rochas.DapperRepository.Test
             Assert.NotNull(result);
             Assert.StartsWith("INSERT INTO", result);
             Assert.Contains("VALUES", result);
-            Assert.Contains("CreationDate", result);
-            Assert.Contains("Name", result);
-            Assert.Contains("Active", result);
+            Assert.Contains("creation_date", result);
+            Assert.Contains("name", result);
+            Assert.Contains("active", result);
         }
 
         [Fact]
@@ -84,7 +84,7 @@ namespace Rochas.DapperRepository.Test
             Assert.NotNull(result);
             Assert.StartsWith("UPDATE", result);
             Assert.Contains("SET", result);
-            Assert.EndsWith(string.Format("WHERE {0}.{1} = 12345", "dbo.SampleEntity", "DocNumber"), result.Trim());
+            Assert.EndsWith(string.Format("WHERE {0}.{1} = 12345", "sample_entity", "doc_number"), result.Trim());
         }
 
         [Fact]
@@ -95,7 +95,7 @@ namespace Rochas.DapperRepository.Test
 
             Assert.NotNull(result);
             Assert.StartsWith("DELETE FROM", result);
-            Assert.EndsWith(string.Format("WHERE {0}.{1} = 12345", "dbo.SampleEntity", "DocNumber"), result.Trim());
+            Assert.EndsWith(string.Format("WHERE {0}.{1} = 12345", "sample_entity", "doc_number"), result.Trim());
         }
 
         [Fact]
@@ -107,7 +107,7 @@ namespace Rochas.DapperRepository.Test
             Assert.NotNull(result);
             Assert.StartsWith("SELECT COUNT", result);
             Assert.Contains("FROM", result);
-            Assert.EndsWith(string.Format("WHERE {0}.{1} = 12345", "dbo.SampleEntity", "DocNumber"), result.Trim());
+            Assert.EndsWith(string.Format("WHERE {0}.{1} = 12345", "sample_entity", "doc_number"), result.Trim());
         }
     }
 }
