@@ -10,10 +10,10 @@
     <PackageProjectUrl></PackageProjectUrl>
     <RepositoryType>Git</RepositoryType>
     <RepositoryUrl>https://github.com/rocha83br/DapperRepository</RepositoryUrl>
-    <PackageTags>dapper light lightweight generic repository entity entities database sql mysql persistence parser crud poco orm</PackageTags>
-    <Version>1.0.3</Version>
+    <PackageTags>dapper light lightweight generic repository entity entities database sql sqlserver mysql sqlite persistence parser crud poco orm</PackageTags>
+    <Version>1.0.4</Version>
     <Description>A lightweight generic entities repository using Dapper</Description>
-    <AssemblyVersion>1.0.3.0</AssemblyVersion>
+    <AssemblyVersion>1.0.4.0</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
