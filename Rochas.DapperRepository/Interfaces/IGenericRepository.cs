@@ -5,6 +5,7 @@ namespace Rochas.DapperRepository.Interfaces
 {
     public interface IGenericRepository<T> where T : class
     {
+        void Initialize(string databaseFileName, string tableScript);
         int Count(T filterEntity);
         Task<int> CountAsync(T filterEntity);
         int Create(T entity);

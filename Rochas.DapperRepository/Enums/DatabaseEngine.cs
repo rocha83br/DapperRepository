@@ -7,6 +7,7 @@ namespace Rochas.DapperRepository.Enums
     public enum DatabaseEngine
     {
         MySQL = 1,
-        SQLServer = 2
+        SQLServer = 2,
+        SQLite = 3
     }
 }

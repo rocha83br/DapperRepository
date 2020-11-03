@@ -13,6 +13,7 @@ namespace Rochas.DapperRepository.Helpers.SQL
         public static string SQL_Action_ExecuteProcedure = "EXEC {0};";
         public static string SQL_Action_ExecuteProcedure_MySQL = "CALL {0}";
         public static string SQL_Action_GetLastId = "SELECT @@IDENTITY ";
+        public static string SQL_Action_GetLastId_SQLite = "SELECT last_insert_rowid(); ";
         public static string SQL_Action_Group = "GROUP BY {0}";
         public static string SQL_Action_LimitResult = "TOP {0}";
         public static string SQL_Action_LimitResult_MySQL = "LIMIT {0}";

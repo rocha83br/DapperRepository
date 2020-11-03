@@ -8,6 +8,7 @@ using MySqlConnector;
 using Rochas.DapperRepository.Helpers.SQL;
 using Rochas.DapperRepository.Exceptions;
 using Rochas.DapperRepository.Enums;
+using System.Data.SQLite;
 
 namespace Rochas.DapperRepository.Base
 {
@@ -87,10 +88,18 @@ namespace Rochas.DapperRepository.Base
         {
             if (!string.IsNullOrEmpty(_connString) || !string.IsNullOrEmpty(optionalConnConfig))
             {
-                if (engine == DatabaseEngine.SQLServer)
-                    connection = new SqlConnection();
-                else
-                    connection = new MySqlConnection();
+                switch(engine)
+                {
+                    case DatabaseEngine.MySQL:
+                        connection = new MySqlConnection();
+                        break;
+                    case DatabaseEngine.SQLServer:
+                        connection = new SqlConnection();
+                        break;
+                    case DatabaseEngine.SQLite:
+                        connection = new SQLiteConnection();
+                        break;
+                }
 
                 if ((connection.State != ConnectionState.Open) && (connection.State != ConnectionState.Connecting))
                 {
@@ -120,17 +129,24 @@ namespace Rochas.DapperRepository.Base
         {
             IEnumerable<object> result = null;
 
-            if (connection.State != ConnectionState.Open)
-                Connect();
+            try
+            {
+                if (connection.State != ConnectionState.Open)
+                    Connect();
 
-            result = connection.Query(entityType, sqlInstruction);
+                result = connection.Query(entityType, sqlInstruction);
+            }
+            catch(Exception ex)
+            {
+                throw ex;
+            }
 
             return result;
         }
 
         protected async Task<IEnumerable<object>> ExecuteQueryAsync(Type entityType, string sqlInstruction)
         {
-            IEnumerable<object> result = null;
+            IEnumerable<object> result;
 
             if (connection.State != ConnectionState.Open)
                 Connect();
@@ -146,25 +162,35 @@ namespace Rochas.DapperRepository.Base
 
             int executionReturn = 0;
 
-            if (connection.State == ConnectionState.Open)
+            try
             {
-                sqlCommand = CompositeCommand(sqlInstruction, parameters);
-
-                if (sqlCommand.CommandText.StartsWith(insertCommand)
-                    || sqlCommand.CommandText.Contains(countCommand))
+                if (connection.State == ConnectionState.Open)
                 {
-                    if (sqlCommand.CommandText.StartsWith(insertCommand))
-                    {
-                        sqlCommand.ExecuteNonQuery();
-                        sqlCommand.CommandText = SQLStatements.SQL_Action_GetLastId;
-                    }
+                    sqlCommand = CompositeCommand(sqlInstruction, parameters);
 
-                    int scalarReturn;
-                    int.TryParse(sqlCommand.ExecuteScalar().ToString(), out scalarReturn);
-                    executionReturn = scalarReturn;
+                    if (sqlCommand.CommandText.StartsWith(insertCommand)
+                        || sqlCommand.CommandText.Contains(countCommand))
+                    {
+                        if (sqlCommand.CommandText.StartsWith(insertCommand))
+                        {
+                            sqlCommand.ExecuteNonQuery();
+                            if (engine == DatabaseEngine.SQLite)
+                                sqlCommand.CommandText = SQLStatements.SQL_Action_GetLastId_SQLite;
+                            else
+                                sqlCommand.CommandText = SQLStatements.SQL_Action_GetLastId;
+                        }
+
+                        int scalarReturn;
+                        int.TryParse(sqlCommand.ExecuteScalar().ToString(), out scalarReturn);
+                        executionReturn = scalarReturn;
+                    }
+                    else
+                        executionReturn = sqlCommand.ExecuteNonQuery();
                 }
-                else
-                    executionReturn = sqlCommand.ExecuteNonQuery();
+            }
+            catch(Exception ex)
+            {
+                throw ex;
             }
 
             return executionReturn;
@@ -186,7 +212,10 @@ namespace Rochas.DapperRepository.Base
                     if (sqlCommand.CommandText.StartsWith(insertCommand))
                     {
                         sqlCommand.ExecuteNonQuery();
-                        sqlCommand.CommandText = SQLStatements.SQL_Action_GetLastId;
+                        if (engine == DatabaseEngine.SQLite)
+                            sqlCommand.CommandText = SQLStatements.SQL_Action_GetLastId_SQLite;
+                        else
+                            sqlCommand.CommandText = SQLStatements.SQL_Action_GetLastId;
                     }
 
                     int scalarReturn;
@@ -212,9 +241,24 @@ namespace Rochas.DapperRepository.Base
             if (parameters != null)
             {
                 sqlCommand.Parameters.Clear();
+
                 foreach (var param in parameters)
                 {
-                    SqlParameter newSqlParameter = new SqlParameter(param.Key.ToString(), param.Value);
+                    IDataParameter newSqlParameter = null;
+
+                    switch(engine)
+                    {
+                        case DatabaseEngine.MySQL:
+                            newSqlParameter = new MySqlParameter(param.Key.ToString(), param.Value);
+                            break;
+                        case DatabaseEngine.SQLServer:
+                            newSqlParameter = new SqlParameter(param.Key.ToString(), param.Value);
+                            break;
+                        case DatabaseEngine.SQLite:
+                            newSqlParameter = new SQLiteParameter(param.Key.ToString(), param.Value);
+                            break;
+                    }
+                    
                     sqlCommand.Parameters.Add(newSqlParameter);
                 }
             }

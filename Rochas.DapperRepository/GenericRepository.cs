@@ -2,19 +2,18 @@
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Reflection;
+using System.IO;
+using Newtonsoft.Json;
 using Rochas.DapperRepository.Base;
 using Rochas.DapperRepository.Enums;
 using Rochas.DapperRepository.Helpers;
 using Rochas.DapperRepository.Interfaces;
-using System.Reflection;
 using Rochas.DapperRepository.Annotations;
-using System.Threading;
-using System.Data;
 using Rochas.DapperRepository.Helpers.SQL;
-using Newtonsoft.Json;
-using System.IO;
-using Dapper;
+using System.Data.SQLite;
 
 namespace Rochas.DapperRepository
 {
@@ -24,20 +23,33 @@ namespace Rochas.DapperRepository
         
         static Type entityType = typeof(T);
         static PropertyInfo[] entityProps = entityType.GetProperties();
+        bool _readUncommited;
 
         #endregion
 
         #region Constructors
 
-        public GenericRepository(DatabaseEngine engine, string connectionString, string logPath = null, bool keepConnected = false, params string[] replicaConnStrings)
+        public GenericRepository(DatabaseEngine engine, string connectionString, string logPath = null, bool keepConnected = false, bool readUncommited = false, params string[] replicaConnStrings)
             : base(engine, connectionString, logPath, keepConnected, replicaConnStrings)
         {
-
+            _readUncommited = readUncommited;
         }
 
         #endregion
 
         #region Public Methods
+
+        public void Initialize(string databaseFileName, string tableScript)
+        {
+            if (File.Exists(databaseFileName))
+                File.Delete(databaseFileName);
+
+            SQLiteConnection.CreateFile(databaseFileName);
+
+            Connect();
+            ExecuteCommand(tableScript);
+            Disconnect();
+        }
 
         public T Get(object key, bool loadComposition = false)
         {
@@ -203,7 +215,7 @@ namespace Rochas.DapperRepository
             IEnumerable<object> returnList = null;
 
             // Getting SQL statement from Helper
-            var sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.List, filterEntity, recordLimit, onlyListableAttributes, showAttributes, rangeValues, groupAttributes, sortAttributes, orderDescending);
+            var sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.List, filterEntity, recordLimit, onlyListableAttributes, showAttributes, rangeValues, groupAttributes, sortAttributes, orderDescending, _readUncommited);
 
             if (keepConnection || Connect())
             {
@@ -224,11 +236,11 @@ namespace Rochas.DapperRepository
             return returnList;
         }
 
-        private async Task<IEnumerable<object>> ListObjectsAsync(object filterEntity, bool loadComposition = false, int recordLimit = 0, bool onlyListableAttributes = false, string showAttributes = null, Dictionary<string, double[]> rangeValues = null, string groupAttributes = null, string orderAttributes = null, bool orderDescending = false, bool readUncommited = true)
+        private async Task<IEnumerable<object>> ListObjectsAsync(object filterEntity, bool loadComposition = false, int recordLimit = 0, bool onlyListableAttributes = false, string showAttributes = null, Dictionary<string, double[]> rangeValues = null, string groupAttributes = null, string orderAttributes = null, bool orderDescending = false)
         {
             IEnumerable<object> returnList = null;
 
-            var sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.List, filterEntity);
+            var sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.List, filterEntity, recordLimit, onlyListableAttributes, showAttributes, rangeValues, groupAttributes, orderAttributes, orderDescending, _readUncommited );
 
             if (keepConnection || base.Connect())
             {
