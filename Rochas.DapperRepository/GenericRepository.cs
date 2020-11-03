@@ -39,12 +39,15 @@ namespace Rochas.DapperRepository
 
         #region Public Methods
 
-        public void Initialize(string databaseFileName, string tableScript)
+        public void Initialize(string tableScript, string databaseFileName = null)
         {
-            if (File.Exists(databaseFileName))
-                File.Delete(databaseFileName);
+            if (!string.IsNullOrWhiteSpace(databaseFileName))
+            {
+                if (File.Exists(databaseFileName))
+                    File.Delete(databaseFileName);
 
-            SQLiteConnection.CreateFile(databaseFileName);
+                SQLiteConnection.CreateFile(databaseFileName);
+            }
 
             Connect();
             ExecuteCommand(tableScript);
