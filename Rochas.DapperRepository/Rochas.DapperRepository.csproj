@@ -6,24 +6,33 @@
     <Authors>Renato Rocha</Authors>
     <Company></Company>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageLicenseUrl>https://raw.githubusercontent.com/rocha83br/DapperRepository/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseUrl></PackageLicenseUrl>
     <PackageProjectUrl></PackageProjectUrl>
     <RepositoryType>Git</RepositoryType>
     <RepositoryUrl>https://github.com/rocha83br/DapperRepository</RepositoryUrl>
-    <PackageTags>dapper light lightweight generic repository entity entities database sql sqlserver mysql sqlite persistence parser crud poco orm</PackageTags>
-    <Version>1.0.4</Version>
-    <Description>A lightweight generic entities repository using Dapper</Description>
-    <AssemblyVersion>1.0.4.0</AssemblyVersion>
+    <PackageTags>dapper light lightweight generic repository entity entities database sql sqlserver mysql sqlite cacheable persistence parser crud poco orm cqrs</PackageTags>
+    <Version>1.0.5</Version>
+    <Description>A lightweight generic entities cacheable repository using Dapper</Description>
+    <AssemblyVersion>1.0.5.0</AssemblyVersion>
+    <PackageLicenseFile>GNUv2_License.txt</PackageLicenseFile>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.0.35" />
     <PackageReference Include="MySqlConnector" Version="1.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="Rochas.DapperRepository.Specification" Version="1.0.0" />
     <PackageReference Include="System.ComponentModel" Version="4.3.0" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="4.7.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.113.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="C:\Users\Renato Rocha\Desktop\GNUv2_License.txt">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>

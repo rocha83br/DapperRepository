@@ -1,5 +1,5 @@
-﻿using Rochas.DapperRepository.Annotations;
-using Rochas.DapperRepository.Enums;
+﻿using Rochas.DapperRepository.Specification.Annotations;
+using Rochas.DapperRepository.Specification.Enums;
 using Rochas.DapperRepository.Exceptions;
 using Rochas.DapperRepository.Helpers.SQL;
 using System;

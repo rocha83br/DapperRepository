@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Rochas.DapperRepository.Interfaces
+namespace Rochas.DapperRepository.Specification.Interfaces
 {
     public interface IGenericRepository<T> where T : class
     {
@@ -20,9 +20,9 @@ namespace Rochas.DapperRepository.Interfaces
         Task<T> GetAsync(object key, bool loadComposition = false);
         T Get(T filter, bool loadComposition = false);
         Task<T> GetAsync(T filter, bool loadComposition = false);
-        ICollection<T> Search(object criteria, bool loadComposition, int recordsLimit = 0, string sortAttributes = null, bool orderDescending = false);
-        Task<ICollection<T>> SearchAsync(object criteria, bool loadComposition, int recordsLimit = 0, string sortAttributes = null, bool orderDescending = false);
-        ICollection<T> List(T filter, bool loadComposition, int recordsLimit = 0, string sortAttributes = null, bool orderDescending = false);
-        Task<ICollection<T>> ListAsync(T filter, bool loadComposition, int recordsLimit = 0, string sortAttributes = null, bool orderDescending = false);
+        ICollection<T> Search(object criteria, bool loadComposition = false, int recordsLimit = 0, string sortAttributes = null, bool orderDescending = false);
+        Task<ICollection<T>> SearchAsync(object criteria, bool loadComposition = false, int recordsLimit = 0, string sortAttributes = null, bool orderDescending = false);
+        ICollection<T> List(T filter, bool loadComposition = false, int recordsLimit = 0, string sortAttributes = null, bool orderDescending = false);
+        Task<ICollection<T>> ListAsync(T filter, bool loadComposition = false, int recordsLimit = 0, string sortAttributes = null, bool orderDescending = false);
     }
 }

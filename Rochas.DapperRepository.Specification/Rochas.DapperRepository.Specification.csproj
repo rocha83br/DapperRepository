@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Authors>Renato Rocha</Authors>
+    <Company>Renato Rocha</Company>
+    <Description>A specification library for Rochas.DapperRepository implementation</Description>
+    <Copyright>Renato Rocha</Copyright>
+    <PackageProjectUrl>https://github.com/rocha83br/DapperRepository</PackageProjectUrl>
+    <PackageTags>dapper light lightweight generic repository entity entities database sql sqlserver mysql sqlite cacheable persistence parser crud poco orm cqrs</PackageTags>
+    <RepositoryUrl>https://github.com/rocha83br/DapperRepository</RepositoryUrl>
+    <RepositoryType>Git</RepositoryType>
+    <PackageLicenseFile>GNUv2_License.txt</PackageLicenseFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="C:\Users\Renato Rocha\Desktop\GNUv2_License.txt">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>

@@ -11,3 +11,5 @@
 /Rochas.DapperRepository/bin/Release
 /Rochas.DapperRepository.Test/bin/Release/netcoreapp2.2
 /Rochas.DapperRepository/bin/Debug
+/Rochas.DapperRepository.Specification/bin/Release
+/Rochas.DapperRepository.Specification/obj

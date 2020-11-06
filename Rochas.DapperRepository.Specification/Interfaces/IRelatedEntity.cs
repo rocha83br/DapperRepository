@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using Rochas.DapperRepository.Enums;
+using Rochas.DapperRepository.Specification.Enums;
 
-namespace Rochas.DapperRepository.Interfaces
+namespace Rochas.DapperRepository.Specification.Interfaces
 {
     interface IRelatedEntity
     {

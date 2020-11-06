@@ -5,7 +5,9 @@ VisualStudioVersion = 16.0.30225.117
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rochas.DapperRepository", "Rochas.DapperRepository\Rochas.DapperRepository.csproj", "{53735DBB-434A-4117-AD89-F980899AFF5F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rochas.DapperRepository.Test", "Rochas.DapperRepository.Test\Rochas.DapperRepository.Test.csproj", "{ABDECF47-D0CB-46BD-AF8E-4EBC7F5E20DC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Rochas.DapperRepository.Test", "Rochas.DapperRepository.Test\Rochas.DapperRepository.Test.csproj", "{ABDECF47-D0CB-46BD-AF8E-4EBC7F5E20DC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rochas.DapperRepository.Specification", "Rochas.DapperRepository.Specification\Rochas.DapperRepository.Specification.csproj", "{166CA028-7CA1-402F-BAAE-8DA12B5F2004}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{ABDECF47-D0CB-46BD-AF8E-4EBC7F5E20DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ABDECF47-D0CB-46BD-AF8E-4EBC7F5E20DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ABDECF47-D0CB-46BD-AF8E-4EBC7F5E20DC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{166CA028-7CA1-402F-BAAE-8DA12B5F2004}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{166CA028-7CA1-402F-BAAE-8DA12B5F2004}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{166CA028-7CA1-402F-BAAE-8DA12B5F2004}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{166CA028-7CA1-402F-BAAE-8DA12B5F2004}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

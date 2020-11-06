@@ -1,10 +1,8 @@
-﻿using Rochas.DapperRepository.Enums;
-using Rochas.DapperRepository.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System;
+using Rochas.DapperRepository.Specification.Enums;
+using Rochas.DapperRepository.Specification.Interfaces;
 
-namespace Rochas.DapperRepository.Annotations
+namespace Rochas.DapperRepository.Specification.Annotations
 {
     public class RelatedEntity : Attribute, IRelatedEntity
     {

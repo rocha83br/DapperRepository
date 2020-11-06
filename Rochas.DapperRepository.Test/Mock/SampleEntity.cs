@@ -1,8 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Rochas.DapperRepository.Annotations;
-using Rochas.DapperRepository.Interfaces;
+using Rochas.DapperRepository.Specification.Annotations;
 
 namespace Rochas.DapperRepository.Test
 {

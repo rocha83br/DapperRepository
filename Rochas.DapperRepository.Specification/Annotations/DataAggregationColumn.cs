@@ -1,7 +1,7 @@
 ﻿using System;
-using Rochas.DapperRepository.Enums;
+using Rochas.DapperRepository.Specification.Enums;
 
-namespace Rochas.DapperRepository.Annotations
+namespace Rochas.DapperRepository.Specification.Annotations
 {
     public class DataAggregationColumn : Attribute
     {

@@ -1,9 +1,7 @@
-﻿using Rochas.DapperRepository.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System;
+using Rochas.DapperRepository.Specification.Enums;
 
-namespace Rochas.DapperRepository.Annotations
+namespace Rochas.DapperRepository.Specification.Annotations
 {
     public class RelationalColumn : Attribute
     {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Rochas.DapperRepository.Enums
+namespace Rochas.DapperRepository.Specification.Enums
 {
     public enum DatabaseEngine
     {

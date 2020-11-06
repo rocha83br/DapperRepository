@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Rochas.DapperRepository.Annotations
+namespace Rochas.DapperRepository.Specification.Annotations
 {
     public class CacheableAttribute : Attribute
     {

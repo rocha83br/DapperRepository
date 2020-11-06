@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Rochas.DapperRepository.Enums
+namespace Rochas.DapperRepository.Specification.Enums
 {
     public enum FilterBehavior
     {

@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Xunit;
-using Rochas.DapperRepository.Enums;
+using Rochas.DapperRepository.Specification.Enums;
 
 namespace Rochas.DapperRepository.Test
 {
     public class GenericRepositoryTest
     {
         private string databaseFileName = "MockDatabase.sqlite";
-        private string connString = $"Data Source=MockDatabase.sqlite;Version=3;New=True;";
+        private string connString = "Data Source=MockDatabase.sqlite;Version=3;New=True;";
 
         [Fact]
         public void Test01_Initialize()
@@ -26,7 +26,7 @@ namespace Rochas.DapperRepository.Test
             
             using (var repos = new GenericRepository<SampleEntity>(DatabaseEngine.SQLite, connString))
             {
-                repos.Initialize(databaseFileName, tableScript);
+                repos.Initialize(tableScript, databaseFileName);
             }
 
             Assert.True(File.Exists(databaseFileName));

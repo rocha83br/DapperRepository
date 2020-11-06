@@ -1,8 +1,7 @@
-using Rochas.DapperRepository.Enums;
-using Rochas.DapperRepository.Helpers;
 using System;
-using System.Collections.Generic;
 using Xunit;
+using Rochas.DapperRepository.Specification.Enums;
+using Rochas.DapperRepository.Helpers;
 
 namespace Rochas.DapperRepository.Test
 {

@@ -8,10 +8,10 @@ using System.Reflection;
 using System.IO;
 using Newtonsoft.Json;
 using Rochas.DapperRepository.Base;
-using Rochas.DapperRepository.Enums;
 using Rochas.DapperRepository.Helpers;
-using Rochas.DapperRepository.Interfaces;
-using Rochas.DapperRepository.Annotations;
+using Rochas.DapperRepository.Specification.Enums;
+using Rochas.DapperRepository.Specification.Interfaces;
+using Rochas.DapperRepository.Specification.Annotations;
 using Rochas.DapperRepository.Helpers.SQL;
 using System.Data.SQLite;
 
@@ -20,7 +20,7 @@ namespace Rochas.DapperRepository
     public class GenericRepository<T> : DataBaseConnection, IDisposable, IGenericRepository<T> where T : class
     {
         #region Declarations
-        
+
         static Type entityType = typeof(T);
         static PropertyInfo[] entityProps = entityType.GetProperties();
         bool _readUncommited;
@@ -243,7 +243,7 @@ namespace Rochas.DapperRepository
         {
             IEnumerable<object> returnList = null;
 
-            var sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.List, filterEntity, recordLimit, onlyListableAttributes, showAttributes, rangeValues, groupAttributes, orderAttributes, orderDescending, _readUncommited );
+            var sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.List, filterEntity, recordLimit, onlyListableAttributes, showAttributes, rangeValues, groupAttributes, orderAttributes, orderDescending, _readUncommited);
 
             if (keepConnection || base.Connect())
             {
@@ -263,7 +263,7 @@ namespace Rochas.DapperRepository
 
             return returnList;
         }
-        
+
         private int Create(object entity, bool persistComposition, string optionalConnConfig = "", bool isReplicating = false)
         {
             string sqlInstruction;

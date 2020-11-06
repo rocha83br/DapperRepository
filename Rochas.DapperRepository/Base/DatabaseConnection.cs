@@ -7,7 +7,7 @@ using Dapper;
 using MySqlConnector;
 using Rochas.DapperRepository.Helpers.SQL;
 using Rochas.DapperRepository.Exceptions;
-using Rochas.DapperRepository.Enums;
+using Rochas.DapperRepository.Specification.Enums;
 using System.Data.SQLite;
 
 namespace Rochas.DapperRepository.Base
@@ -23,9 +23,9 @@ namespace Rochas.DapperRepository.Base
         protected bool keepConnection = false;
         protected IDbConnection connection;
         protected IDbTransaction transactionControl;
-        
+
         #endregion
-        
+
         #region Constructors
 
         public DataBaseConnection(DatabaseEngine databaseEngine, string connectionString, string logPath = null, bool keepConnected = false, params string[] replicaConnStrings) : base(connectionString, logPath, replicaConnStrings)
@@ -42,7 +42,7 @@ namespace Rochas.DapperRepository.Base
 
         public void StartTransaction()
         {
-            if ((connection == null) 
+            if ((connection == null)
                 || (connection.State != ConnectionState.Open))
                 keepConnection = Connect();
 
@@ -88,7 +88,7 @@ namespace Rochas.DapperRepository.Base
         {
             if (!string.IsNullOrEmpty(_connString) || !string.IsNullOrEmpty(optionalConnConfig))
             {
-                switch(engine)
+                switch (engine)
                 {
                     case DatabaseEngine.MySQL:
                         connection = new MySqlConnection();
@@ -127,19 +127,12 @@ namespace Rochas.DapperRepository.Base
 
         protected IEnumerable<object> ExecuteQuery(Type entityType, string sqlInstruction)
         {
-            IEnumerable<object> result = null;
+            IEnumerable<object> result;
 
-            try
-            {
-                if (connection.State != ConnectionState.Open)
-                    Connect();
+            if (connection.State != ConnectionState.Open)
+                Connect();
 
-                result = connection.Query(entityType, sqlInstruction);
-            }
-            catch(Exception ex)
-            {
-                throw ex;
-            }
+            result = connection.Query(entityType, sqlInstruction);
 
             return result;
         }
@@ -162,35 +155,29 @@ namespace Rochas.DapperRepository.Base
 
             int executionReturn = 0;
 
-            try
+
+            if (connection.State == ConnectionState.Open)
             {
-                if (connection.State == ConnectionState.Open)
+                sqlCommand = CompositeCommand(sqlInstruction, parameters);
+
+                if (sqlCommand.CommandText.StartsWith(insertCommand)
+                    || sqlCommand.CommandText.Contains(countCommand))
                 {
-                    sqlCommand = CompositeCommand(sqlInstruction, parameters);
-
-                    if (sqlCommand.CommandText.StartsWith(insertCommand)
-                        || sqlCommand.CommandText.Contains(countCommand))
+                    if (sqlCommand.CommandText.StartsWith(insertCommand))
                     {
-                        if (sqlCommand.CommandText.StartsWith(insertCommand))
-                        {
-                            sqlCommand.ExecuteNonQuery();
-                            if (engine == DatabaseEngine.SQLite)
-                                sqlCommand.CommandText = SQLStatements.SQL_Action_GetLastId_SQLite;
-                            else
-                                sqlCommand.CommandText = SQLStatements.SQL_Action_GetLastId;
-                        }
-
-                        int scalarReturn;
-                        int.TryParse(sqlCommand.ExecuteScalar().ToString(), out scalarReturn);
-                        executionReturn = scalarReturn;
+                        sqlCommand.ExecuteNonQuery();
+                        if (engine == DatabaseEngine.SQLite)
+                            sqlCommand.CommandText = SQLStatements.SQL_Action_GetLastId_SQLite;
+                        else
+                            sqlCommand.CommandText = SQLStatements.SQL_Action_GetLastId;
                     }
-                    else
-                        executionReturn = sqlCommand.ExecuteNonQuery();
+
+                    int scalarReturn;
+                    int.TryParse(sqlCommand.ExecuteScalar().ToString(), out scalarReturn);
+                    executionReturn = scalarReturn;
                 }
-            }
-            catch(Exception ex)
-            {
-                throw ex;
+                else
+                    executionReturn = sqlCommand.ExecuteNonQuery();
             }
 
             return executionReturn;
@@ -246,7 +233,7 @@ namespace Rochas.DapperRepository.Base
                 {
                     IDataParameter newSqlParameter = null;
 
-                    switch(engine)
+                    switch (engine)
                     {
                         case DatabaseEngine.MySQL:
                             newSqlParameter = new MySqlParameter(param.Key.ToString(), param.Value);
@@ -258,7 +245,7 @@ namespace Rochas.DapperRepository.Base
                             newSqlParameter = new SQLiteParameter(param.Key.ToString(), param.Value);
                             break;
                     }
-                    
+
                     sqlCommand.Parameters.Add(newSqlParameter);
                 }
             }
