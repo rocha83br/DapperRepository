@@ -16,11 +16,11 @@ namespace Rochas.DapperRepository.Base
     {
         #region Declarations
 
-        private DatabaseEngine engine;
         private readonly string insertCommand = SQLStatements.SQL_ReservedWord_INSERT;
         private readonly string countCommand = SQLStatements.SQL_ReservedWord_COUNT;
 
         protected bool keepConnection = false;
+        protected DatabaseEngine engine;
         protected IDbConnection connection;
         protected IDbTransaction transactionControl;
 

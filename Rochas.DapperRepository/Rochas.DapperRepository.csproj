@@ -9,10 +9,10 @@
     <RepositoryType>Git</RepositoryType>
     <RepositoryUrl>https://github.com/rocha83br/DapperRepository</RepositoryUrl>
     <PackageProjectUrl>https://github.com/rocha83br/DapperRepository</PackageProjectUrl>
-    <PackageTags>dapper light lightweight generic repository entity entities database sql sqlserver mysql sqlite cacheable persistence parser crud poco orm cqrs</PackageTags>
-    <Version>1.0.5.1</Version>
+    <PackageTags>dapper light lightweight generic repository entity entities database sql sqlserver mysql sqlite cache cacheable persistence parser crud poco orm cqrs</PackageTags>
+    <Version>1.0.6</Version>
     <Description>A lightweight generic entities cacheable repository using Dapper</Description>
-    <AssemblyVersion>1.0.5.1</AssemblyVersion>
+    <AssemblyVersion>1.0.6.0</AssemblyVersion>
     <PackageLicenseFile>GNUv2_License.txt</PackageLicenseFile>
   </PropertyGroup>
 

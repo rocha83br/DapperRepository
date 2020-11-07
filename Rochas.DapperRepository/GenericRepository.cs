@@ -134,43 +134,37 @@ namespace Rochas.DapperRepository
 
         public void CreateRange(IEnumerable<T> entities)
         {
-            using (var repos = new GenericRepository<T>(DatabaseEngine.SQLServer, _connString))
+            try
             {
-                try
-                {
-                    repos.StartTransaction();
+                StartTransaction();
 
-                    foreach (var entity in entities)
-                        repos.Create(entity, false);
+                foreach (var entity in entities)
+                    Create(entity, false);
 
-                    repos.CommitTransaction();
-                }
-                catch (Exception ex)
-                {
-                    repos.CancelTransaction();
-                    throw ex;
-                }
+                CommitTransaction();
+            }
+            catch (Exception ex)
+            {
+                CancelTransaction();
+                throw ex;
             }
         }
 
         public async Task CreateRangeAsync(IEnumerable<T> entities)
         {
-            using (var repos = new GenericRepository<T>(DatabaseEngine.SQLServer, _connString))
+            try
             {
-                try
-                {
-                    repos.StartTransaction();
+                StartTransaction();
 
-                    foreach (var entity in entities)
-                        await repos.CreateAsync(entity, false);
+                foreach (var entity in entities)
+                    await CreateAsync(entity, false);
 
-                    repos.CommitTransaction();
-                }
-                catch (Exception ex)
-                {
-                    repos.CancelTransaction();
-                    throw ex;
-                }
+                CommitTransaction();
+            }
+            catch (Exception ex)
+            {
+                CancelTransaction();
+                throw ex;
             }
         }
 
@@ -218,7 +212,7 @@ namespace Rochas.DapperRepository
             IEnumerable<object> returnList = null;
 
             // Getting SQL statement from Helper
-            var sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.List, filterEntity, recordLimit, onlyListableAttributes, showAttributes, rangeValues, groupAttributes, sortAttributes, orderDescending, _readUncommited);
+            var sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, engine, PersistenceAction.List, filterEntity, recordLimit, onlyListableAttributes, showAttributes, rangeValues, groupAttributes, sortAttributes, orderDescending, _readUncommited);
 
             if (keepConnection || Connect())
             {
@@ -243,7 +237,7 @@ namespace Rochas.DapperRepository
         {
             IEnumerable<object> returnList = null;
 
-            var sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.List, filterEntity, recordLimit, onlyListableAttributes, showAttributes, rangeValues, groupAttributes, orderAttributes, orderDescending, _readUncommited);
+            var sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, engine, PersistenceAction.List, filterEntity, recordLimit, onlyListableAttributes, showAttributes, rangeValues, groupAttributes, orderAttributes, orderDescending, _readUncommited);
 
             if (keepConnection || base.Connect())
             {
@@ -274,7 +268,7 @@ namespace Rochas.DapperRepository
 
             if (keepConnection || base.Connect(optionalConnConfig))
             {
-                sqlInstruction = EntitySqlParser.ParseEntity(entity, PersistenceAction.Create);
+                sqlInstruction = EntitySqlParser.ParseEntity(entity, engine, PersistenceAction.Create);
 
                 if (persistComposition)
                     base.StartTransaction();
@@ -306,7 +300,7 @@ namespace Rochas.DapperRepository
 
             if (keepConnection || base.Connect(optionalConnConfig))
             {
-                sqlInstruction = EntitySqlParser.ParseEntity(entity, PersistenceAction.Create);
+                sqlInstruction = EntitySqlParser.ParseEntity(entity, engine, PersistenceAction.Create);
 
                 if (persistComposition)
                     base.StartTransaction();
@@ -338,7 +332,7 @@ namespace Rochas.DapperRepository
 
             if (keepConnection || base.Connect(optionalConnConfig))
             {
-                sqlInstruction = EntitySqlParser.ParseEntity(entity, PersistenceAction.Edit, filterEntity);
+                sqlInstruction = EntitySqlParser.ParseEntity(entity, engine, PersistenceAction.Edit, filterEntity);
 
                 if (persistComposition)
                     base.StartTransaction();
@@ -370,7 +364,7 @@ namespace Rochas.DapperRepository
 
             if (keepConnection || base.Connect(optionalConnConfig))
             {
-                sqlInstruction = EntitySqlParser.ParseEntity(entity, PersistenceAction.Edit, filterEntity);
+                sqlInstruction = EntitySqlParser.ParseEntity(entity, engine, PersistenceAction.Edit, filterEntity);
 
                 if (persistComposition)
                     base.StartTransaction();
@@ -402,7 +396,7 @@ namespace Rochas.DapperRepository
 
             if (keepConnection || base.Connect(optionalConnConfig))
             {
-                sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.Delete, filterEntity);
+                sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, engine, PersistenceAction.Delete, filterEntity);
 
                 recordsAffected = ExecuteCommand(sqlInstruction);
 
@@ -430,7 +424,7 @@ namespace Rochas.DapperRepository
 
             if (keepConnection || base.Connect(optionalConnConfig))
             {
-                sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.Delete, filterEntity);
+                sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, engine, PersistenceAction.Delete, filterEntity);
 
                 recordsAffected = await ExecuteCommandAsync(sqlInstruction);
 
@@ -453,7 +447,7 @@ namespace Rochas.DapperRepository
             int result = 0;
 
             // Getting SQL statement from Helper
-            var sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.Count, filterEntity);
+            var sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, engine, PersistenceAction.Count, filterEntity);
 
             if (keepConnection || Connect())
             {
@@ -471,7 +465,7 @@ namespace Rochas.DapperRepository
             int result = 0;
 
             // Getting SQL statement from Helper
-            var sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, PersistenceAction.Count, filterEntity);
+            var sqlInstruction = EntitySqlParser.ParseEntity(filterEntity, engine, PersistenceAction.Count, filterEntity);
 
             if (keepConnection || Connect())
             {
@@ -613,7 +607,7 @@ namespace Rochas.DapperRepository
 
                         SetEntityForeignKey(entityParent, child);
 
-                        result.Add(EntitySqlParser.ParseEntity(childEntityInstance, action));
+                        result.Add(EntitySqlParser.ParseEntity(childEntityInstance, engine, action));
                     }
                     else
                     {
@@ -640,7 +634,7 @@ namespace Rochas.DapperRepository
 
                                     SetEntityForeignKey(entityParent, listItem);
 
-                                    result.Add(EntitySqlParser.ParseEntity(listItem, action));
+                                    result.Add(EntitySqlParser.ParseEntity(listItem, engine, action));
                                 }
                                 else
                                 {
@@ -663,7 +657,7 @@ namespace Rochas.DapperRepository
                                         childFiltersList.Add(existFilter);
                                     }
 
-                                    result.Add(EntitySqlParser.ParseEntity(manyToEntity, action));
+                                    result.Add(EntitySqlParser.ParseEntity(manyToEntity, engine, action));
                                 }
                             }
                         }

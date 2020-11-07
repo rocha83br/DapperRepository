@@ -101,7 +101,7 @@ namespace Rochas.DapperRepository.Helpers
                             columnValue = SqlDefaultValue.Null;
                         break;
                     case SQL.DataType.Integer:
-                        if ((((int)columnValue == int.MinValue) && !isRequired) || (action == PersistenceAction.List))
+                        if (((int)columnValue == int.MinValue) && !isRequired)
                             columnValue = SqlDefaultValue.Null;
                         break;
                     case SQL.DataType.Long:

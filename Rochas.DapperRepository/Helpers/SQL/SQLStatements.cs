@@ -15,7 +15,7 @@ namespace Rochas.DapperRepository.Helpers.SQL
         public static string SQL_Action_GetLastId = "SELECT @@IDENTITY ";
         public static string SQL_Action_GetLastId_SQLite = "SELECT last_insert_rowid(); ";
         public static string SQL_Action_Group = "GROUP BY {0}";
-        public static string SQL_Action_LimitResult = "TOP {0}";
+        public static string SQL_Action_LimitResult = "TOP {0} ";
         public static string SQL_Action_LimitResult_MySQL = "LIMIT {0}";
         public static string SQL_Action_MaximumAggregation = "MAX({0}.{1}) AS {2}, ";
         public static string SQL_Action_MinimumAggregation = "MIN({0}.{1}) AS {2}, ";
