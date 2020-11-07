@@ -15,7 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="C:\Users\Renato Rocha\Desktop\GNUv2_License.txt">
+    <None Include="GNUv2_License.txt">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
