@@ -97,7 +97,24 @@ namespace Rochas.DapperRepository.Test
         }
 
         [Fact]
-        public void Test06_Search()
+        public void Test06_ListLimited()
+        {
+            ICollection<SampleEntity> result;
+
+            var filter = new SampleEntity() { Name = "roberto" };
+
+            using (var repos = new GenericRepository<SampleEntity>(DatabaseEngine.SQLite, connString))
+            {
+                result = repos.List(filter, recordsLimit: 5);
+            }
+
+            Assert.NotNull(result);
+            Assert.True(result.Any());
+            Assert.True(result.Count <= 5);
+        }
+
+        [Fact]
+        public void Test07_Search()
         {
             ICollection<SampleEntity> result;
 
@@ -113,7 +130,7 @@ namespace Rochas.DapperRepository.Test
         }
 
         [Fact]
-        public void Test07_Count()
+        public void Test08_Count()
         {
             int result = 0;
             var filter = new SampleEntity() { Name = "roberto" };
@@ -127,7 +144,7 @@ namespace Rochas.DapperRepository.Test
         }
 
         [Fact]
-        public void Test08_Edit()
+        public void Test09_Edit()
         {
             int result = 0;
             var filter = new SampleEntity() { DocNumber = 12345 };
@@ -145,7 +162,7 @@ namespace Rochas.DapperRepository.Test
         }
 
         [Fact]
-        public void Test09_Delete()
+        public void Test10_Delete()
         {
             int result = 0;
             var filter = new SampleEntity() { DocNumber = 12345 };
