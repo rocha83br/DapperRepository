@@ -70,7 +70,7 @@ namespace Rochas.DapperRepository.Test
         {
             SampleEntity result;
 
-            var filter = new SampleEntity() { DocNumber = 12345 };
+            var filter = new SampleEntity() { Name = "Roberto Torres" };
             using(var repos = new GenericRepository<SampleEntity>(DatabaseEngine.SQLite, connString))
             {
                 result = repos.Get(filter);
