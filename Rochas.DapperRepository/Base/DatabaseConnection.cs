@@ -216,6 +216,28 @@ namespace Rochas.DapperRepository.Base
             return executionReturn;
         }
 
+        protected void ExecuteBulkCommand(DataTable entitiesTable)
+        {
+            if (connection.State != ConnectionState.Open)
+                Connect();
+
+            using (var bulkCmd = new SqlBulkCopy(_connString))
+            {
+                bulkCmd.WriteToServer(entitiesTable);
+            }
+        }
+
+        protected async Task ExecuteBulkCommandAsync(DataTable entitiesTable)
+        {
+            if (connection.State != ConnectionState.Open)
+                Connect();
+
+            using (var bulkCmd = new SqlBulkCopy(_connString))
+            {
+                await bulkCmd.WriteToServerAsync(entitiesTable);
+            }
+        }
+
         private IDbCommand CompositeCommand(string sqlInstruction, Dictionary<object, object> parameters = null)
         {
             var sqlCommand = connection.CreateCommand();
