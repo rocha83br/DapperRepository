@@ -13,6 +13,7 @@ namespace Rochas.DapperRepository.Helpers.SQL
         public const string Binary = "System.Byte[]";
         public const string Float = "System.Single";
         public const string Double = "System.Double";
+        public const string Boolean = "System.Boolean";
 
         #endregion
     }

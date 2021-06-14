@@ -39,7 +39,10 @@ namespace Rochas.DapperRepository.Helpers
                 Dictionary<object, object> attributeColumnRelation;
 
                 var entityType = entity.GetType();
-                var entityProps = entityType.GetProperties();
+                var nameSpacePrefix = entityType.Namespace.Substring(0, entityType.Namespace.IndexOf("."));
+
+                var entityProps = entityType.GetProperties()
+                                            .Where(p => !p.PropertyType.Namespace.StartsWith(nameSpacePrefix)).ToArray();
 
                 // Model validation
                 if (!EntityReflector.VerifyTableAnnotation(entityType))

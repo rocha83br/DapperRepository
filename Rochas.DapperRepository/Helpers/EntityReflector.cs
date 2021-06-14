@@ -9,6 +9,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Data;
 
 namespace Rochas.DapperRepository.Helpers
 {
@@ -107,6 +108,9 @@ namespace Rochas.DapperRepository.Helpers
                     case SQL.DataType.Long:
                         if (((long)columnValue == long.MinValue) && !isRequired)
                             columnValue = SqlDefaultValue.Null;
+                        break;
+                    case SQL.DataType.Boolean:
+                        columnValue = ((bool)columnValue) ? 1 : 0;
                         break;
                     case SQL.DataType.String:
                         var strValue = columnValue.ToString().Replace("'", "\"");
@@ -233,6 +237,33 @@ namespace Rochas.DapperRepository.Helpers
         public static bool VerifyTableAnnotation(Type entityType)
         {
             return (GetTableAttribute(entityType) != null);
+        }
+
+        public static DataTable GetDataTable<T>(ICollection<T> list) 
+        {
+            DataTable table = CreateTable<T>();
+            var properties = typeof(T).GetProperties();
+            foreach (var item in list)
+            {
+                DataRow row = table.NewRow();
+                foreach (var prop in properties)
+                {
+                    row[prop.Name] = prop.GetValue(item);
+                }
+                table.Rows.Add(row);
+            }
+            return table;
+        }
+        private static DataTable CreateTable<T>()
+        {
+            Type entityType = typeof(T);
+            DataTable table = new DataTable(entityType.Name);
+            var properties = entityType.GetProperties();
+            foreach (var prop in properties)
+            {
+                table.Columns.Add(prop.Name, prop.PropertyType);
+            }
+            return table;
         }
     }
 }
