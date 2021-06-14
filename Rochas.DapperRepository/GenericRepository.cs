@@ -121,24 +121,24 @@ namespace Rochas.DapperRepository
             return result;
         }
 
-        public int Create(T entity)
+        public int Create(T entity, bool persistComposition = false)
         {
-            return Create(entity, false);
+            return CreateObject(entity, persistComposition);
         }
 
-        public async Task<int> CreateAsync(T entity)
+        public async Task<int> CreateAsync(T entity, bool persistComposition = false)
         {
-            return await CreateAsync(entity, false);
+            return await CreateObjectAsync(entity, persistComposition);
         }
 
-        public void CreateRange(IEnumerable<T> entities)
+        public void CreateRange(IEnumerable<T> entities, bool persistComposition = false)
         {
             try
             {
                 StartTransaction();
 
                 foreach (var entity in entities)
-                    Create(entity, false);
+                    CreateObject(entity, persistComposition);
 
                 CommitTransaction();
             }
@@ -149,14 +149,26 @@ namespace Rochas.DapperRepository
             }
         }
 
-        public async Task CreateRangeAsync(IEnumerable<T> entities)
+        public void CreateBulkRange(ICollection<T> entities)
+        {
+            var entitiesTable = EntityReflector.GetDataTable<T>(entities);
+            ExecuteBulkCommand(entitiesTable);
+        }
+
+        public async Task CreateBulkRangeAsync(ICollection<T> entities)
+        {
+            var entitiesTable = EntityReflector.GetDataTable<T>(entities);
+            await ExecuteBulkCommandAsync(entitiesTable);
+        }
+
+        public async Task CreateRangeAsync(IEnumerable<T> entities, bool persistComposition = false)
         {
             try
             {
                 StartTransaction();
 
                 foreach (var entity in entities)
-                    await CreateAsync(entity, false);
+                    await CreateObjectAsync(entity, persistComposition);
 
                 CommitTransaction();
             }
@@ -167,14 +179,14 @@ namespace Rochas.DapperRepository
             }
         }
 
-        public int Edit(T entity, T filterEntity)
+        public int Edit(T entity, T filterEntity, bool persistComposition = false)
         {
-            return Edit(entity, filterEntity, false);
+            return EditObject(entity, filterEntity, persistComposition);
         }
 
-        public async Task<int> EditAsync(T entity, T filterEntity)
+        public async Task<int> EditAsync(T entity, T filterEntity, bool persistComposition = false)
         {
-            return await EditAsync(entity, filterEntity, false);
+            return await EditObjectAsync(entity, filterEntity, persistComposition);
         }
 
         public int Delete(T filterEntity)
@@ -263,7 +275,7 @@ namespace Rochas.DapperRepository
             return returnList;
         }
 
-        private int Create(object entity, bool persistComposition, string optionalConnConfig = "", bool isReplicating = false)
+        private int CreateObject(object entity, bool persistComposition, string optionalConnConfig = "", bool isReplicating = false)
         {
             string sqlInstruction;
             int lastInsertedId = 0;
@@ -295,7 +307,7 @@ namespace Rochas.DapperRepository
             return lastInsertedId;
         }
 
-        private async Task<int> CreateAsync(object entity, bool persistComposition, string optionalConnConfig = "", bool isReplicating = false)
+        private async Task<int> CreateObjectAsync(object entity, bool persistComposition, string optionalConnConfig = "", bool isReplicating = false)
         {
             string sqlInstruction;
             int lastInsertedId = 0;
@@ -327,7 +339,7 @@ namespace Rochas.DapperRepository
             return lastInsertedId;
         }
 
-        private int Edit(object entity, object filterEntity, bool persistComposition, string optionalConnConfig = "", bool isReplicating = false)
+        private int EditObject(object entity, object filterEntity, bool persistComposition, string optionalConnConfig = "", bool isReplicating = false)
         {
             int recordsAffected = 0;
             string sqlInstruction;
@@ -359,7 +371,7 @@ namespace Rochas.DapperRepository
             return recordsAffected;
         }
 
-        private async Task<int> EditAsync(object entity, object filterEntity, bool persistComposition, string optionalConnConfig = "", bool isReplicating = false)
+        private async Task<int> EditObjectAsync(object entity, object filterEntity, bool persistComposition, string optionalConnConfig = "", bool isReplicating = false)
         {
             int recordsAffected = 0;
             string sqlInstruction;
@@ -488,7 +500,7 @@ namespace Rochas.DapperRepository
             RelatedEntity relationConfig = null;
 
             var propertiesList = entityProps.Where(prp => prp.GetCustomAttributes(true)
-                                           .Any(atb => atb.GetType().Name.Equals("RelatedEntity")));
+                                            .Any(atb => atb.GetType().Name.Equals("RelatedEntity")));
 
             foreach (var prop in propertiesList)
             {
@@ -510,7 +522,7 @@ namespace Rochas.DapperRepository
                     {
                         case RelationCardinality.OneToOne:
 
-                            attributeInstance = Activator.CreateInstance<T>();
+                            attributeInstance = Activator.CreateInstance(prop.PropertyType);
 
                             foreignKeyColumn = loadedEntity.GetType().GetProperty(relationConfig.ForeignKeyAttribute);
 
@@ -800,10 +812,10 @@ namespace Rochas.DapperRepository
                         switch (action)
                         {
                             case PersistenceAction.Create:
-                                repos.Create(entity, persistComposition, connString, true);
+                                repos.CreateObject(entity, persistComposition, connString, true);
                                 break;
                             case PersistenceAction.Edit:
-                                repos.Edit(entity, filterEntity, persistComposition, connString, true);
+                                repos.EditObject(entity, filterEntity, persistComposition, connString, true);
                                 break;
                             case PersistenceAction.Delete:
                                 repos.Delete(entity, connString, true);

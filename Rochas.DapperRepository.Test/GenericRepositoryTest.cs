@@ -77,7 +77,7 @@ namespace Rochas.DapperRepository.Test
             }
 
             Assert.NotNull(result);
-            Assert.Equal(filter.DocNumber, result.DocNumber);
+            Assert.Equal(filter.Name, result.Name);
         }
 
         [Fact]
